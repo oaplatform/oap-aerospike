@@ -1,0 +1,14 @@
+generate-sources.log
+.surefire*
+*.iml
+target
+*.log
+libraries
+workspace.xml
+compiler.xml
+misc.xml
+encodings.xml
+modules.xml
+vcs.xml
+inspectionProfiles
+.flattened-pom.xml

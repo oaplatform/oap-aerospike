@@ -1,0 +1,35 @@
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <packaging>pom</packaging>
+    <artifactId>oap-aerospike-parent</artifactId>
+    <version>${revision}</version>
+
+    <parent>
+        <groupId>oap</groupId>
+        <artifactId>oap.maven</artifactId>
+        <version>2.0.0</version>
+    </parent>
+
+    <modules>
+        <module>oap-aerospike</module>
+    </modules>
+
+    <repositories>
+        <repository>
+            <id>oap</id>
+            <url>https://mvn.oaplatform.org</url>
+        </repository>
+    </repositories>
+
+    <properties>
+        <revision>3.4.0</revision>
+
+        <oap.deps.oap.version>8.0.15</oap.deps.oap.version>
+        <oap.deps.slf4j.version>1.7.30</oap.deps.slf4j.version>
+        <oap.deps.lombok.version>1.18.14</oap.deps.lombok.version>
+        <oap.deps.logback.version>1.2.3</oap.deps.logback.version>
+        <oap.deps.aerospike.version>5.0.0</oap.deps.aerospike.version>
+    </properties>
+</project>

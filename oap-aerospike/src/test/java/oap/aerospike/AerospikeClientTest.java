@@ -6,8 +6,6 @@ import com.aerospike.client.query.Filter;
 import com.aerospike.client.query.IndexCollectionType;
 import com.aerospike.client.query.IndexType;
 import com.google.common.base.Strings;
-import oap.aerospike.AerospikeClient;
-import oap.aerospike.AerospikeFixture;
 import oap.application.Kernel;
 import oap.application.Module;
 import oap.testng.Fixtures;
@@ -144,7 +142,7 @@ public class AerospikeClientTest extends Fixtures {
                 r.bins.put("b1", r.getLong("b1") + 1);
 
                 return r.bins;
-            }, 1, Dates.s(60))).isEmpty();
+            }, 1, Dates.s(60), "b1", "b2")).isEmpty();
             assertThat(client.findAndModify(TEST_NAMESPACE, "test", "id1", r -> {
                 assertThat(r.getLong("b1")).isEqualTo(2L);
                 r.bins.put("b1", r.getLong("b1") + 1);

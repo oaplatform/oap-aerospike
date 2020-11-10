@@ -296,7 +296,7 @@ public class AerospikeClient implements Closeable {
         return Optional.empty();
     }
 
-    public Optional<Integer> findAndModify(String namespace, String set, String id, Function<Record, Map<String, Object>> func, int maxRetries, long timeout) {
+    public Optional<Integer> findAndModify(String namespace, String set, String id, Function<Record, Map<String, Object>> func, int maxRetries, long timeout, String... binNames) {
         var policy = new Policy(readPolicy);
         policy.setTimeout((int) timeout);
         policy.maxRetries = maxRetries;
@@ -308,7 +308,7 @@ public class AerospikeClient implements Closeable {
             var connection = getConnection();
             if (!connection.isSuccess()) return Optional.of(connection.failureValue.getResultCode());
 
-            connection.successValue.get(eventLoops.next(), readListener, policy, key);
+            connection.successValue.get(eventLoops.next(), readListener, policy, key, binNames.length == 0 ? null : binNames);
 
             return readListener.completableFuture
                     .thenCompose(record -> {

@@ -331,7 +331,10 @@ public class AerospikeClient implements Closeable {
                             connection.successValue.put(eventLoops.next(), writeListener, currentWritePolicy, new Key(namespace, set, id), arr);
 
                             return writeListener.completableFuture
-                                    .thenApply(r -> Optional.<Integer>empty())
+                                    .thenApply(r -> {
+                                        METRIC_WRITE_SUCCESS.increment();
+                                        return Optional.<Integer>empty();
+                                    })
                                     .exceptionally(e -> {
                                         var resultCode = getResultCode(e);
                                         getMetricWriteError(resultCode).increment();

@@ -640,6 +640,11 @@ public class AerospikeClient implements Closeable {
         }, writeTimeout);
     }
 
+    public Result<AerospikeAsyncClient, AerospikeException> operations() {
+        var connectionResult = getConnection();
+        return connectionResult.mapSuccess(ac -> new AerospikeAsyncClient(ac, eventLoops, writePolicy));
+    }
+
     public Stream<Pair<Key, Record>> stream(String namespace, String set) throws AerospikeException {
         var scanPolicy = new ScanPolicy();
         scanPolicy.includeBinData = true;

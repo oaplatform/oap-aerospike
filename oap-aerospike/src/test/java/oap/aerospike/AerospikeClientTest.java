@@ -1,11 +1,14 @@
 package oap.aerospike;
 
-import com.aerospike.client.Key;
+import com.aerospike.client.*;
 import com.aerospike.client.Record;
+import com.aerospike.client.cdt.ListOperation;
+import com.aerospike.client.listener.RecordListener;
 import com.aerospike.client.query.Filter;
 import com.aerospike.client.query.IndexCollectionType;
 import com.aerospike.client.query.IndexType;
 import com.google.common.base.Strings;
+import lombok.extern.slf4j.Slf4j;
 import oap.application.Kernel;
 import oap.application.Module;
 import oap.testng.Fixtures;
@@ -22,6 +25,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static oap.aerospike.AerospikeFixture.TEST_NAMESPACE;
@@ -29,10 +33,12 @@ import static oap.testng.Asserts.pathOfResource;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.fail;
 
 /**
  * Created by igor.petrenko on 29.05.2019.
  */
+@Slf4j
 public class AerospikeClientTest extends Fixtures {
     {
         fixture(new AerospikeFixture());
@@ -201,6 +207,44 @@ public class AerospikeClientTest extends Fixtures {
             } finally {
                 assertThat(client.dropIndex(TEST_NAMESPACE, "test", "test_index")).isEmpty();
             }
+        }
+    }
+
+    @Test
+    public void testOperations() throws IOException, InterruptedException {
+        try (var client = new AerospikeClient(AerospikeFixture.HOST, AerospikeFixture.PORT, true)) {
+            client.primaryKeyStored = true;
+            client.eventLoopSize = 1;
+            client.maxCommandsInQueue = 1;
+            client.maxConnsPerNode = 5;
+            client.connPoolsPerNode = 1;
+
+            client.start();
+            client.waitConnectionEstablished();
+
+            var counter = new AtomicInteger();
+
+            var ac = client.operations().successValue;
+            var key = new Key(TEST_NAMESPACE, "test", "1");
+            var operation = ListOperation.append("b", new Value.FloatValue(1));
+
+            for (var i = 0; i < 1000; i++) {
+                assertThat(ac.operate(new RecordListener() {
+                    @Override
+                    public void onSuccess(Key key, Record record) {
+                        counter.incrementAndGet();
+                        log.trace("count = {}", counter.get());
+                    }
+
+                    @Override
+                    public void onFailure(AerospikeException exception) {
+                        fail();
+                    }
+                }, key, operation)).isEmpty();
+            }
+
+            ac.waitTillComplete(1000);
+            assertThat(counter.get()).isEqualTo(1000);
         }
     }
 }

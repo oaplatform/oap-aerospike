@@ -211,7 +211,7 @@ public class AerospikeClientTest extends Fixtures {
     }
 
     @Test
-    public void testOperations() throws IOException, InterruptedException {
+    public void testOperations() throws IOException, InterruptedException, TimeoutException {
         try (var client = new AerospikeClient(AerospikeFixture.HOST, AerospikeFixture.PORT, true)) {
             client.primaryKeyStored = true;
             client.eventLoopSize = 1;
@@ -243,7 +243,7 @@ public class AerospikeClientTest extends Fixtures {
                 }, key, operation)).isEmpty();
             }
 
-            ac.waitTillComplete(1000);
+            ac.waitTillComplete(1000, 10, TimeUnit.SECONDS);
             assertThat(counter.get()).isEqualTo(1000);
         }
     }

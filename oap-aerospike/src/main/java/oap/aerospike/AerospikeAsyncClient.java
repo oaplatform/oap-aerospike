@@ -8,9 +8,12 @@ import com.aerospike.client.async.EventLoops;
 import com.aerospike.client.listener.RecordListener;
 import com.aerospike.client.policy.WritePolicy;
 import lombok.extern.slf4j.Slf4j;
+import org.joda.time.DateTimeUtils;
 
 import java.util.Optional;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -64,10 +67,15 @@ public class AerospikeAsyncClient {
         }
     }
 
-    public void waitTillComplete(long count) throws InterruptedException {
+    public void waitTillComplete(long count, long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
+        var start = DateTimeUtils.currentTimeMillis();
+
         processQueue(0);
 
         while (counter.get() < count) {
+            if (DateTimeUtils.currentTimeMillis() - start >= unit.toMillis(timeout))
+                throw new TimeoutException();
+
             Thread.sleep(1);
             processQueue(0);
         }

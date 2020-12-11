@@ -3,6 +3,7 @@ package oap.aerospike;
 import com.aerospike.client.Record;
 import com.aerospike.client.*;
 import com.aerospike.client.async.*;
+import com.aerospike.client.cluster.Node;
 import com.aerospike.client.listener.DeleteListener;
 import com.aerospike.client.listener.RecordListener;
 import com.aerospike.client.listener.RecordSequenceListener;
@@ -191,6 +192,8 @@ public class AerospikeClient implements Closeable {
                         var hosts = this.hosts.stream().map(h -> new Host(h, port)).toArray(Host[]::new);
                         try {
                             _client = new com.aerospike.client.AerospikeClient(clientPolicy, hosts);
+                            var nodes = _client.getNodes();
+                            log.info("nodes = {}", Stream.of(nodes).map(Node::getHost).collect(toList()));
 
                             cluster = new AerospikeCluster(forceSingleNode, clientPolicy.tendInterval, _client);
 

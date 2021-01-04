@@ -53,6 +53,8 @@ services:
       writeTimeout: 1s
       batchTimeout: 40
 
+      commitLevel: COMMIT_ALL
+
       forceSingleNode: true
       rackId: 0
       

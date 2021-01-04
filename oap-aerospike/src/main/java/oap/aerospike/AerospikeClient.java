@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Tags;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import oap.LogConsolidated;
 import oap.concurrent.Threads;
 import oap.io.Closeables;
 import oap.util.Dates;
@@ -27,6 +28,7 @@ import oap.util.Pair;
 import oap.util.Result;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableObject;
+import org.slf4j.event.Level;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -42,6 +44,7 @@ import java.util.stream.StreamSupport;
 
 import static java.lang.Integer.max;
 import static java.util.stream.Collectors.toList;
+import static oap.util.Dates.s;
 import static oap.util.Pair.__;
 
 /**
@@ -81,6 +84,7 @@ public class AerospikeClient implements Closeable {
     public int queueInitialCapacity = 256;
     public long minTimeout = 100;
     public boolean primaryKeyStored = false;
+    public CommitLevel commitLevel = CommitLevel.COMMIT_ALL;
     public ClientPolicy clientPolicy;
     public Policy readPolicy;
     public WritePolicy writePolicy;
@@ -129,6 +133,7 @@ public class AerospikeClient implements Closeable {
         writePolicy.setTimeout((int) writeTimeout);
         writePolicy.timeoutDelay = (int) timeoutDelay;
         writePolicy.sendKey = primaryKeyStored;
+        writePolicy.commitLevel = commitLevel;
 
         batchPolicy = new BatchPolicy(clientPolicy.batchPolicyDefault);
         batchPolicy.setTimeout((int) batchTimeout);
@@ -199,10 +204,7 @@ public class AerospikeClient implements Closeable {
 
                             log.trace("connecting... Done");
                         } catch (AerospikeException e) {
-                            if (log.isTraceEnabled())
-                                log.trace(e.getMessage());
-
-                            log.trace("connecting... Error");
+                            LogConsolidated.log(log, Level.TRACE, s(5), e.getMessage(), e);
                             return Result.failure(e);
                         }
                     }
@@ -494,7 +496,7 @@ public class AerospikeClient implements Closeable {
             getMetricWriteError(ERROR_CODE_CLIENT_TIMEOUT).increment();
             return Optional.of(ERROR_CODE_CLIENT_TIMEOUT);
         } else {
-            log.error(ex.getMessage(), ex);
+            LogConsolidated.log(log, Level.ERROR, s(5), ex.getMessage(), ex);
             getMetricWriteError(ERROR_CODE_UNKNOWN).increment();
             return Optional.of(ERROR_CODE_UNKNOWN);
         }
@@ -589,7 +591,7 @@ public class AerospikeClient implements Closeable {
             }, null, statement);
             return f;
         } catch (AerospikeException e) {
-            log.error(e.getMessage(), e);
+            LogConsolidated.log(log, Level.ERROR, s(5), e.getMessage(), e);
             getMetricReadError(e.getResultCode()).increment();
             f.complete(Optional.of(e.getResultCode()));
             return f;
@@ -735,7 +737,7 @@ public class AerospikeClient implements Closeable {
 
         @Override
         public void onFailure(AerospikeException exception) {
-            log.trace(exception.getMessage(), exception);
+            LogConsolidated.log(log, Level.TRACE, s(5), exception.getMessage(), exception);
             completableFuture.completeExceptionally(exception);
         }
     }
@@ -768,7 +770,7 @@ public class AerospikeClient implements Closeable {
 
         @Override
         public void onFailure(AerospikeException exception) {
-            log.trace(exception.getMessage(), exception);
+            LogConsolidated.log(log, Level.TRACE, s(5), exception.getMessage(), exception);
             completableFuture.completeExceptionally(exception);
         }
     }
@@ -783,7 +785,7 @@ public class AerospikeClient implements Closeable {
 
         @Override
         public void onFailure(AerospikeException exception) {
-            log.trace(exception.getMessage(), exception);
+            LogConsolidated.log(log, Level.TRACE, s(5), exception.getMessage(), exception);
             completableFuture.completeExceptionally(exception);
         }
     }

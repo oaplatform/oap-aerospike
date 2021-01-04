@@ -8,7 +8,10 @@ import com.aerospike.client.async.EventLoops;
 import com.aerospike.client.listener.RecordListener;
 import com.aerospike.client.policy.WritePolicy;
 import lombok.extern.slf4j.Slf4j;
+import oap.LogConsolidated;
+import oap.util.Dates;
 import org.joda.time.DateTimeUtils;
+import org.slf4j.event.Level;
 
 import java.util.Optional;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -25,7 +28,7 @@ public class AerospikeAsyncClient {
     private final EventLoops eventLoops;
     private final WritePolicy writePolicy;
     private final LinkedBlockingQueue<Runnable> blockingQueue = new LinkedBlockingQueue<>();
-    private AtomicLong counter = new AtomicLong();
+    private final AtomicLong counter = new AtomicLong();
 
     public AerospikeAsyncClient(com.aerospike.client.AerospikeClient aerospikeClient, EventLoops eventLoops, WritePolicy writePolicy) {
         this.aerospikeClient = aerospikeClient;
@@ -53,7 +56,7 @@ public class AerospikeAsyncClient {
 
             return Optional.empty();
         } catch (AerospikeException e) {
-            log.error(e.getMessage());
+            LogConsolidated.log(log, Level.ERROR, Dates.s(5), e.getMessage(), null);
             return Optional.of(e.getResultCode());
         } catch (InterruptedException e) {
             return Optional.of(AerospikeClient.ERROR_CODE_INTERRUPTED);
@@ -103,7 +106,6 @@ public class AerospikeAsyncClient {
             } else {
                 recordListener.onFailure(exception);
             }
-
         }
     }
 }

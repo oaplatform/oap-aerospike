@@ -217,11 +217,15 @@ public class AerospikeClient implements Closeable {
     }
 
     public void update(String namespace, String set, String id, int generation, String beanName, Object value, int retry) {
-        update(new Key(namespace, set, id), generation, Map.of(beanName, value), retry);
+        update(writePolicy, new Key(namespace, set, id), generation, Map.of(beanName, value), retry);
     }
 
     public void update(String namespace, String set, String id, String beanName, Object value, int retry) {
-        update(new Key(namespace, set, id), Map.of(beanName, value), retry);
+        update(writePolicy, namespace, set, id, beanName, value, retry);
+    }
+
+    public void update(WritePolicy writePolicy, String namespace, String set, String id, String beanName, Object value, int retry) {
+        update(writePolicy, new Key(namespace, set, id), Map.of(beanName, value), retry);
     }
 
     public void update(String namespace, String set, byte[] id, String beanName, Object value, int retry) {
@@ -232,7 +236,7 @@ public class AerospikeClient implements Closeable {
         update(key, Map.of(beanName, value), retry);
     }
 
-    private WritePolicy getWritePolicyWithGeneration(int generation) {
+    private WritePolicy getWritePolicyWithGeneration(WritePolicy writePolicy, int generation) {
         var currentWritePolicy = writePolicy;
         if (generation >= 0) {
             currentWritePolicy = new WritePolicy(this.writePolicy);
@@ -243,15 +247,19 @@ public class AerospikeClient implements Closeable {
     }
 
     public void update(String namespace, String set, String id, Map<String, Object> bins, int retry) {
-        update(new Key(namespace, set, id), -1, bins, retry);
+        update(writePolicy, new Key(namespace, set, id), -1, bins, retry);
     }
 
     public void update(String namespace, String set, byte[] id, Map<String, Object> bins, int retry) {
-        update(new Key(namespace, set, id), -1, bins, retry);
+        update(writePolicy, new Key(namespace, set, id), -1, bins, retry);
     }
 
     public void update(Key id, Map<String, Object> bins, int retry) {
-        update(id, -1, bins, retry);
+        update(writePolicy, id, bins, retry);
+    }
+
+    public void update(WritePolicy writePolicy, Key id, Map<String, Object> bins, int retry) {
+        update(writePolicy, id, -1, bins, retry);
     }
 
     public Optional<Integer> createIndex(String namespace, String set, String indexName, String binName,
@@ -328,7 +336,7 @@ public class AerospikeClient implements Closeable {
                         for (var entry : bins.entrySet()) {
                             arr[i++] = new Bin(entry.getKey(), entry.getValue());
                         }
-                        var currentWritePolicy = getWritePolicyWithGeneration(record != null ? record.generation : -1);
+                        var currentWritePolicy = getWritePolicyWithGeneration(writePolicy, record != null ? record.generation : -1);
                         currentWritePolicy.setTimeout((int) timeout);
                         currentWritePolicy.maxRetries = maxRetries;
 
@@ -371,20 +379,20 @@ public class AerospikeClient implements Closeable {
     }
 
     public Optional<Integer> update(String namespace, String set, String id, int generation, Map<String, Object> bins, int retry) {
-        return update(new Key(namespace, set, id), generation, bins, retry);
+        return update(writePolicy, new Key(namespace, set, id), generation, bins, retry);
     }
 
     public Optional<Integer> update(String namespace, String set, byte[] id, int generation, Map<String, Object> bins, int retry) {
-        return update(new Key(namespace, set, id), generation, bins, retry);
+        return update(writePolicy, new Key(namespace, set, id), generation, bins, retry);
     }
 
-    Optional<Integer> update(Key key, int generation, Map<String, Object> bins, int retry) {
+    Optional<Integer> update(WritePolicy writePolicy, Key key, int generation, Map<String, Object> bins, int retry) {
         var arr = new Bin[bins.size()];
         var i = 0;
         for (var entry : bins.entrySet()) {
             arr[i++] = new Bin(entry.getKey(), entry.getValue());
         }
-        var currentWritePolicy = getWritePolicyWithGeneration(generation);
+        var currentWritePolicy = getWritePolicyWithGeneration(writePolicy, generation);
 
         var ret = getConnectionAndUpdate(generation, (connection, eventLoop) -> {
             try {

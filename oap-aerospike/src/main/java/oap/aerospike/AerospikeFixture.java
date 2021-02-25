@@ -44,16 +44,22 @@ public class AerospikeFixture extends EnvFixture {
 
     @Override
     public void beforeMethod() {
+        super.beforeMethod();
+
         init(METHOD);
     }
 
     @Override
     public void beforeClass() {
+        super.beforeClass();
+
         init(CLASS);
     }
 
     @Override
     public void beforeSuite() {
+        super.beforeSuite();
+
         init(SUITE);
     }
 
@@ -78,18 +84,24 @@ public class AerospikeFixture extends EnvFixture {
     @Override
     public void afterMethod() {
         shutdown(METHOD);
+
+        super.afterMethod();
     }
 
     @SneakyThrows
     @Override
     public void afterClass() {
         shutdown(CLASS);
+
+        super.afterClass();
     }
 
     @SneakyThrows
     @Override
     public void afterSuite() {
         shutdown(SUITE);
+
+        super.afterSuite();
     }
 
     private void shutdown(Scope scope) throws IOException {

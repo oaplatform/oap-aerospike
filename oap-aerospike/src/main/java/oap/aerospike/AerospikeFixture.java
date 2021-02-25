@@ -2,7 +2,7 @@ package oap.aerospike;
 
 import lombok.SneakyThrows;
 import oap.testng.Env;
-import oap.testng.Fixture;
+import oap.testng.EnvFixture;
 import oap.util.Dates;
 
 import java.io.IOException;
@@ -12,13 +12,12 @@ import static oap.testng.Fixture.Scope.*;
 /**
  * Created by igor.petrenko on 2019-12-06.
  */
-public class AerospikeFixture implements Fixture {
+public class AerospikeFixture extends EnvFixture {
     public static final String TEST_NAMESPACE = Env.getEnvOrDefault("AEROSPIKE_TEST_NAMESPACE", "test");
     public static final String HOST = Env.getEnvOrDefault("AEROSPIKE_HOST", "localhost");
     public static final int PORT = Integer.parseInt(Env.getEnvOrDefault("AEROSPIKE_PORT", "3000"));
     public final int maxConnsPerNode;
     public final int connPoolsPerNode;
-    private final Scope scope;
     public AerospikeClient aerospikeClient;
 
     public AerospikeFixture() {
@@ -37,6 +36,10 @@ public class AerospikeFixture implements Fixture {
         this.scope = scope;
         this.maxConnsPerNode = maxConnsPerNode;
         this.connPoolsPerNode = connPoolsPerNode;
+
+        define("AEROSPIKE_TEST_NAMESPACE", TEST_NAMESPACE);
+        define("AEROSPIKE_HOST", HOST);
+        define("AEROSPIKE_PORT", PORT);
     }
 
     @Override
@@ -56,10 +59,6 @@ public class AerospikeFixture implements Fixture {
 
     private void init(Scope scope) {
         if (this.scope != scope) return;
-
-        System.setProperty("AEROSPIKE_TEST_NAMESPACE", TEST_NAMESPACE);
-        System.setProperty("AEROSPIKE_HOST", HOST);
-        System.setProperty("AEROSPIKE_PORT", String.valueOf(PORT));
 
         aerospikeClient = new AerospikeClient(HOST, PORT, true);
         aerospikeClient.maxConnsPerNode = maxConnsPerNode;

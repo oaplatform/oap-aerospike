@@ -77,7 +77,9 @@ public class AerospikeFixture extends EnvFixture {
 
 
     public AerospikeFixture withScope(Scope scope) {
-        return new AerospikeFixture(scope, maxConnsPerNode, connPoolsPerNode);
+        this.scope = scope;
+        
+        return this;
     }
 
     @SneakyThrows

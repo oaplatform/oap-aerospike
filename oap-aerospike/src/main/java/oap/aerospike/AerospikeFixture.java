@@ -1,7 +1,7 @@
 package oap.aerospike;
 
 import lombok.SneakyThrows;
-import oap.testng.Env;
+import oap.system.Env;
 import oap.testng.EnvFixture;
 import oap.util.Dates;
 
@@ -13,9 +13,9 @@ import static oap.testng.Fixture.Scope.*;
  * Created by igor.petrenko on 2019-12-06.
  */
 public class AerospikeFixture extends EnvFixture {
-    public static final String TEST_NAMESPACE = Env.getEnvOrDefault("AEROSPIKE_TEST_NAMESPACE", "test");
-    public static final String HOST = Env.getEnvOrDefault("AEROSPIKE_HOST", "localhost");
-    public static final int PORT = Integer.parseInt(Env.getEnvOrDefault("AEROSPIKE_PORT", "3000"));
+    public static final String TEST_NAMESPACE = Env.get("AEROSPIKE_TEST_NAMESPACE", "test");
+    public static final String HOST = Env.get("AEROSPIKE_HOST", "localhost");
+    public static final int PORT = Integer.parseInt(Env.get("AEROSPIKE_PORT", "3000"));
     public final int maxConnsPerNode;
     public final int connPoolsPerNode;
     public AerospikeClient aerospikeClient;

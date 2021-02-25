@@ -24,7 +24,7 @@
     </repositories>
 
     <properties>
-        <revision>3.4.12</revision>
+        <revision>3.4.13</revision>
 
         <oap.deps.oap.version>8.6.10</oap.deps.oap.version>
         <oap.deps.slf4j.version>1.7.30</oap.deps.slf4j.version>

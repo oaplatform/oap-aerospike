@@ -24,9 +24,9 @@
     </repositories>
 
     <properties>
-        <revision>3.4.9</revision>
+        <revision>3.4.10</revision>
 
-        <oap.deps.oap.version>8.6.1</oap.deps.oap.version>
+        <oap.deps.oap.version>8.6.10</oap.deps.oap.version>
         <oap.deps.slf4j.version>1.7.30</oap.deps.slf4j.version>
         <oap.deps.lombok.version>1.18.18</oap.deps.lombok.version>
         <oap.deps.logback.version>1.2.3</oap.deps.logback.version>

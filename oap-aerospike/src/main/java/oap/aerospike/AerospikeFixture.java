@@ -7,6 +7,8 @@ import oap.util.Dates;
 
 import java.io.IOException;
 
+import static oap.testng.Fixture.Scope.*;
+
 /**
  * Created by igor.petrenko on 2019-12-06.
  */
@@ -16,38 +18,45 @@ public class AerospikeFixture implements Fixture {
     public static final int PORT = Integer.parseInt(Env.getEnvOrDefault("AEROSPIKE_PORT", "3000"));
     public final int maxConnsPerNode;
     public final int connPoolsPerNode;
-    private final boolean method;
+    private final Scope scope;
     public AerospikeClient aerospikeClient;
 
     public AerospikeFixture() {
-        this(true);
+        this(METHOD);
     }
 
     public AerospikeFixture(int maxConnsPerNode, int connPoolsPerNode) {
-        this(true, maxConnsPerNode, connPoolsPerNode);
+        this(METHOD, maxConnsPerNode, connPoolsPerNode);
     }
 
-    public AerospikeFixture(boolean method) {
-        this(method, 300, 1);
+    public AerospikeFixture(Scope scope) {
+        this(scope, 300, 1);
     }
 
-    public AerospikeFixture(boolean method, int maxConnsPerNode, int connPoolsPerNode) {
-        this.method = method;
+    public AerospikeFixture(Scope scope, int maxConnsPerNode, int connPoolsPerNode) {
+        this.scope = scope;
         this.maxConnsPerNode = maxConnsPerNode;
         this.connPoolsPerNode = connPoolsPerNode;
     }
 
     @Override
     public void beforeMethod() {
-        if (method) init();
+        init(METHOD);
     }
 
     @Override
     public void beforeClass() {
-        if (!method) init();
+        init(CLASS);
     }
 
-    private void init() {
+    @Override
+    public void beforeSuite() {
+        init(SUITE);
+    }
+
+    private void init(Scope scope) {
+        if (this.scope != scope) return;
+
         System.setProperty("AEROSPIKE_TEST_NAMESPACE", TEST_NAMESPACE);
         System.setProperty("AEROSPIKE_HOST", HOST);
         System.setProperty("AEROSPIKE_PORT", String.valueOf(PORT));
@@ -61,19 +70,32 @@ public class AerospikeFixture implements Fixture {
         asDeleteAll();
     }
 
+
+    public AerospikeFixture withScope(Scope scope) {
+        return new AerospikeFixture(scope, maxConnsPerNode, connPoolsPerNode);
+    }
+
     @SneakyThrows
     @Override
     public void afterMethod() {
-        if (method) shutdown();
+        shutdown(METHOD);
     }
 
     @SneakyThrows
     @Override
     public void afterClass() {
-        if (!method) shutdown();
+        shutdown(CLASS);
     }
 
-    private void shutdown() throws IOException {
+    @SneakyThrows
+    @Override
+    public void afterSuite() {
+        shutdown(SUITE);
+    }
+
+    private void shutdown(Scope scope) throws IOException {
+        if (this.scope != scope) return;
+
         asDeleteAll();
         aerospikeClient.close();
     }

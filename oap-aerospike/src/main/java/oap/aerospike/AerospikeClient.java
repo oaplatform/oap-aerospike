@@ -159,6 +159,13 @@ public class AerospikeClient implements Closeable {
         eventPolicy.queueInitialCapacity = queueInitialCapacity;
         eventPolicy.minTimeout = (int) minTimeout;
 
+        log.info("hosts: {}:{}, forceSingleNode: {}, rackId: {}, availableProcessors: {}, maxConnsPerNode:{}, connPoolsPerNode:{}",
+                hosts, port, forceSingleNode, rackId, availableProcessors, maxConnsPerNode, connPoolsPerNode);
+
+        log.info("eventLoopSize: {}, maxCommandsInProcess: {}, maxCommandsInQueue: {}, queueInitialCapacity:{}, commandsPerEventLoop:{}, minTimeout:{}",
+                eventLoopSize, maxConnsPerNode / eventLoopSize,
+                maxCommandsInQueue, queueInitialCapacity, commandsPerEventLoop, Dates.durationToString(minTimeout));
+
         clientPolicy.eventLoops = eventLoops = new NioEventLoops(eventPolicy, eventLoopSize, true, "aerospike");
 
         if (rackId > 0) {
@@ -168,14 +175,7 @@ public class AerospikeClient implements Closeable {
 
             clientPolicy.rackAware = true;
         }
-
-        log.info("hosts: {}:{}, forceSingleNode: {}, rackId: {}, availableProcessors: {}, maxConnsPerNode:{}, connPoolsPerNode:{}",
-                hosts, port, forceSingleNode, rackId, availableProcessors, maxConnsPerNode, connPoolsPerNode);
-
-        log.info("eventLoopSize: {}, maxCommandsInProcess: {}, maxCommandsInQueue: {}, queueInitialCapacity:{}, commandsPerEventLoop:{}, minTimeout:{}",
-                eventLoopSize, maxConnsPerNode / eventLoopSize,
-                maxCommandsInQueue, queueInitialCapacity, commandsPerEventLoop, Dates.durationToString(minTimeout));
-
+        
         Metrics.gauge("aerospike_client_pool", Tags.of("type", "user"), this,
                 ac -> Stream.of(ac.eventLoops.getArray()).mapToLong(EventLoop::getProcessSize).sum());
     }

@@ -14,7 +14,7 @@ import static oap.testng.Fixture.Scope.*;
  */
 public class AerospikeFixture extends EnvFixture {
     public static final String TEST_NAMESPACE = Env.get("AEROSPIKE_TEST_NAMESPACE", "test");
-    public static final String HOST = Env.get("AEROSPIKE_HOST", "localhost");
+    public static final String HOST = Env.get("AEROSPIKE_HOSTS", "localhost");
     public static final int PORT = Integer.parseInt(Env.get("AEROSPIKE_PORT", "3000"));
     public final int maxConnsPerNode;
     public final int connPoolsPerNode;
@@ -38,7 +38,7 @@ public class AerospikeFixture extends EnvFixture {
         this.connPoolsPerNode = connPoolsPerNode;
 
         define("AEROSPIKE_TEST_NAMESPACE", TEST_NAMESPACE);
-        define("AEROSPIKE_HOST", HOST);
+        define("AEROSPIKE_HOSTS", HOST);
         define("AEROSPIKE_PORT", PORT);
     }
 

@@ -13,24 +13,24 @@ import java.util.function.BiFunction;
  */
 @FunctionalInterface
 public interface AerospikeClientFunction<T> {
-    T apply(com.aerospike.client.AerospikeClient t, EventLoop eventLoop) throws AerospikeException;
+    T apply( com.aerospike.client.AerospikeClient t, EventLoop eventLoop ) throws AerospikeException;
 
     default BiFunction<AerospikeClient, EventLoop, T> asFunction() {
-        return (t, eventLoop) -> {
+        return ( t, eventLoop ) -> {
             try {
-                return this.apply(t, eventLoop);
-            } catch (Exception e) {
-                throw Throwables.propagate(e);
+                return this.apply( t, eventLoop );
+            } catch( Exception e ) {
+                throw Throwables.propagate( e );
             }
         };
     }
 
-    default BiFunction<AerospikeClient, EventLoop, T> orElseThrow(Class<? extends RuntimeException> clazz) {
-        return (t, eventLoop) -> {
+    default BiFunction<AerospikeClient, EventLoop, T> orElseThrow( Class<? extends RuntimeException> clazz ) {
+        return ( t, eventLoop ) -> {
             try {
-                return this.apply(t, eventLoop);
-            } catch (Exception e) {
-                throw Reflect.newInstance(clazz, e);
+                return this.apply( t, eventLoop );
+            } catch( Exception e ) {
+                throw Reflect.newInstance( clazz, e );
             }
         };
     }

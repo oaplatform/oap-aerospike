@@ -30,23 +30,23 @@ public class AerospikeAsyncClient {
     private final LinkedBlockingQueue<Runnable> blockingQueue = new LinkedBlockingQueue<>();
     private final AtomicLong counter = new AtomicLong();
 
-    public AerospikeAsyncClient(com.aerospike.client.AerospikeClient aerospikeClient, EventLoops eventLoops, WritePolicy writePolicy) {
+    public AerospikeAsyncClient( com.aerospike.client.AerospikeClient aerospikeClient, EventLoops eventLoops, WritePolicy writePolicy ) {
         this.aerospikeClient = aerospikeClient;
         this.eventLoops = eventLoops;
         this.writePolicy = writePolicy;
     }
 
-    public Optional<Integer> operate(RecordListener recordListener, Key key, Operation... operations) {
+    public Optional<Integer> operate( RecordListener recordListener, Key key, Operation... operations ) {
 
         try {
-            processQueue(1);
+            processQueue( 1 );
 
-            var blockingQueueRecordListener = new BlockingQueueRecordListener(recordListener);
+            var blockingQueueRecordListener = new BlockingQueueRecordListener( recordListener );
 
             var proc = new Runnable() {
                 @Override
                 public void run() {
-                    aerospikeClient.operate(eventLoops.next(), blockingQueueRecordListener, writePolicy, key, operations);
+                    aerospikeClient.operate( eventLoops.next(), blockingQueueRecordListener, writePolicy, key, operations );
                 }
             };
 
@@ -55,32 +55,32 @@ public class AerospikeAsyncClient {
             proc.run();
 
             return Optional.empty();
-        } catch (AerospikeException e) {
-            LogConsolidated.log(log, Level.ERROR, Dates.s(5), e.getMessage(), null);
-            return Optional.of(e.getResultCode());
-        } catch (InterruptedException e) {
-            return Optional.of(AerospikeClient.ERROR_CODE_INTERRUPTED);
+        } catch( AerospikeException e ) {
+            LogConsolidated.log( log, Level.ERROR, Dates.s( 5 ), e.getMessage(), null );
+            return Optional.of( e.getResultCode() );
+        } catch( InterruptedException e ) {
+            return Optional.of( AerospikeClient.ERROR_CODE_INTERRUPTED );
         }
     }
 
-    private void processQueue(int sleep) throws InterruptedException {
-        while (!blockingQueue.isEmpty()) {
-            if (sleep > 0) Thread.sleep(sleep);
+    private void processQueue( int sleep ) throws InterruptedException {
+        while( !blockingQueue.isEmpty() ) {
+            if( sleep > 0 ) Thread.sleep( sleep );
             blockingQueue.poll().run();
         }
     }
 
-    public void waitTillComplete(long count, long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
+    public void waitTillComplete( long count, long timeout, TimeUnit unit ) throws InterruptedException, TimeoutException {
         var start = DateTimeUtils.currentTimeMillis();
 
-        processQueue(0);
+        processQueue( 0 );
 
-        while (counter.get() < count) {
-            if (DateTimeUtils.currentTimeMillis() - start >= unit.toMillis(timeout))
+        while( counter.get() < count ) {
+            if( DateTimeUtils.currentTimeMillis() - start >= unit.toMillis( timeout ) )
                 throw new TimeoutException();
 
-            Thread.sleep(1);
-            processQueue(0);
+            Thread.sleep( 1 );
+            processQueue( 0 );
         }
     }
 
@@ -89,22 +89,22 @@ public class AerospikeAsyncClient {
         private final RecordListener recordListener;
         public Runnable proc;
 
-        public BlockingQueueRecordListener(RecordListener recordListener) {
+        private BlockingQueueRecordListener( RecordListener recordListener ) {
             this.recordListener = recordListener;
         }
 
         @Override
-        public void onSuccess(Key key, Record record) {
-            recordListener.onSuccess(key, record);
+        public void onSuccess( Key key, Record record ) {
+            recordListener.onSuccess( key, record );
             counter.incrementAndGet();
         }
 
         @Override
-        public void onFailure(AerospikeException exception) {
-            if (exception instanceof AerospikeException.AsyncQueueFull) {
-                blockingQueue.add(proc);
+        public void onFailure( AerospikeException exception ) {
+            if( exception instanceof AerospikeException.AsyncQueueFull ) {
+                blockingQueue.add( proc );
             } else {
-                recordListener.onFailure(exception);
+                recordListener.onFailure( exception );
             }
         }
     }

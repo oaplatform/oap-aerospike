@@ -7,85 +7,87 @@ import oap.util.Dates;
 
 import java.io.IOException;
 
-import static oap.testng.Fixture.Scope.*;
+import static oap.testng.Fixture.Scope.CLASS;
+import static oap.testng.Fixture.Scope.METHOD;
+import static oap.testng.Fixture.Scope.SUITE;
 
 /**
  * Created by igor.petrenko on 2019-12-06.
  */
 public class AerospikeFixture extends EnvFixture {
-    public static final String TEST_NAMESPACE = Env.get("AEROSPIKE_TEST_NAMESPACE", "test");
-    public static final String HOST = Env.get("AEROSPIKE_HOSTS", "localhost");
-    public static final int PORT = Integer.parseInt(Env.get("AEROSPIKE_PORT", "3000"));
+    public static final String TEST_NAMESPACE = Env.get( "AEROSPIKE_TEST_NAMESPACE", "test" );
+    public static final String HOST = Env.get( "AEROSPIKE_HOSTS", "localhost" );
+    public static final int PORT = Integer.parseInt( Env.get( "AEROSPIKE_PORT", "3000" ) );
     public final int maxConnsPerNode;
     public final int connPoolsPerNode;
     public AerospikeClient aerospikeClient;
 
     public AerospikeFixture() {
-        this(METHOD);
+        this( METHOD );
     }
 
-    public AerospikeFixture(int maxConnsPerNode, int connPoolsPerNode) {
-        this(METHOD, maxConnsPerNode, connPoolsPerNode);
+    public AerospikeFixture( int maxConnsPerNode, int connPoolsPerNode ) {
+        this( METHOD, maxConnsPerNode, connPoolsPerNode );
     }
 
-    public AerospikeFixture(Scope scope) {
-        this(scope, 300, 1);
+    public AerospikeFixture( Scope scope ) {
+        this( scope, 300, 1 );
     }
 
-    public AerospikeFixture(Scope scope, int maxConnsPerNode, int connPoolsPerNode) {
+    public AerospikeFixture( Scope scope, int maxConnsPerNode, int connPoolsPerNode ) {
         this.scope = scope;
         this.maxConnsPerNode = maxConnsPerNode;
         this.connPoolsPerNode = connPoolsPerNode;
 
-        define("AEROSPIKE_TEST_NAMESPACE", TEST_NAMESPACE);
-        define("AEROSPIKE_HOSTS", HOST);
-        define("AEROSPIKE_PORT", PORT);
+        define( "AEROSPIKE_TEST_NAMESPACE", TEST_NAMESPACE );
+        define( "AEROSPIKE_HOSTS", HOST );
+        define( "AEROSPIKE_PORT", PORT );
     }
 
     @Override
     public void beforeMethod() {
         super.beforeMethod();
 
-        init(METHOD);
+        init( METHOD );
     }
 
     @Override
     public void beforeClass() {
         super.beforeClass();
 
-        init(CLASS);
+        init( CLASS );
     }
 
     @Override
     public void beforeSuite() {
         super.beforeSuite();
 
-        init(SUITE);
+        init( SUITE );
     }
 
-    private void init(Scope scope) {
-        if (this.scope != scope) return;
+    private void init( Scope scope ) {
+        if( this.scope != scope ) return;
 
-        aerospikeClient = new AerospikeClient(HOST, PORT, true);
+        aerospikeClient = new AerospikeClient( HOST, PORT, true );
         aerospikeClient.maxConnsPerNode = maxConnsPerNode;
         aerospikeClient.connPoolsPerNode = connPoolsPerNode;
-        aerospikeClient.connectionTimeout = Dates.s(120);
+        aerospikeClient.connectionTimeout = Dates.s( 120 );
         aerospikeClient.start();
         aerospikeClient.waitConnectionEstablished();
         asDeleteAll();
     }
 
 
-    public AerospikeFixture withScope(Scope scope) {
+    public AerospikeFixture withScope( Scope scope ) {
         this.scope = scope;
-        
+
         return this;
     }
 
     @SneakyThrows
     @Override
     public void afterMethod() {
-        shutdown(METHOD);
+        shutdown( METHOD );
 
         super.afterMethod();
     }
@@ -93,7 +95,7 @@ public class AerospikeFixture extends EnvFixture {
     @SneakyThrows
     @Override
     public void afterClass() {
-        shutdown(CLASS);
+        shutdown( CLASS );
 
         super.afterClass();
     }
@@ -101,24 +103,24 @@ public class AerospikeFixture extends EnvFixture {
     @SneakyThrows
     @Override
     public void afterSuite() {
-        shutdown(SUITE);
+        shutdown( SUITE );
 
         super.afterSuite();
     }
 
-    private void shutdown(Scope scope) throws IOException {
-        if (this.scope != scope) return;
+    private void shutdown( Scope scope ) throws IOException {
+        if( this.scope != scope ) return;
 
         asDeleteAll();
         aerospikeClient.close();
     }
 
     public void asDeleteAll() {
-        var ret = aerospikeClient.getSets(TEST_NAMESPACE);
-        ret.ifSuccess(sets -> {
-            for (var set : sets) {
-                aerospikeClient.deleteAll(TEST_NAMESPACE, set, 2);
+        var ret = aerospikeClient.getSets( TEST_NAMESPACE );
+        ret.ifSuccess( sets -> {
+            for( var set : sets ) {
+                aerospikeClient.deleteAll( TEST_NAMESPACE, set, 2 );
             }
-        });
+        } );
     }
 }

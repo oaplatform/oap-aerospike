@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
 
 import static oap.aerospike.AerospikeFixture.TEST_NAMESPACE;
 import static oap.testng.Asserts.pathOfResource;
-import static oap.testng.Asserts.pathOfTestResource;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.testng.Assert.assertNotNull;
@@ -101,7 +100,7 @@ public class AerospikeClientTest extends Fixtures {
     public void testStartWithoutAerospike() {
         var kernel = new Kernel( Module.CONFIGURATION.urlsFromClassPath() );
         try {
-            assertThatCode( () -> kernel.start( pathOfTestResource( getClass(), "/test-application.conf" ) ) )
+            assertThatCode( () -> kernel.start( pathOfResource( getClass(), "/test-application.conf" ) ) )
                 .doesNotThrowAnyException();
         } finally {
             kernel.stop();

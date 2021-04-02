@@ -1,18 +1,17 @@
 package oap.aerospike;
 
-import lombok.SneakyThrows;
 import oap.system.Env;
 import oap.testng.EnvFixture;
 import oap.util.Dates;
 
 import java.io.IOException;
-
-import static oap.testng.Fixture.Scope.CLASS;
-import static oap.testng.Fixture.Scope.METHOD;
-import static oap.testng.Fixture.Scope.SUITE;
+import java.io.UncheckedIOException;
 
 /**
- * Created by igor.petrenko on 2019-12-06.
+ * Env:
+ * - AEROSPIKE_TEST_NAMESPACE
+ * - AEROSPIKE_HOSTS
+ * - AEROSPIKE_PORT
  */
 public class AerospikeFixture extends EnvFixture {
     public static final String TEST_NAMESPACE = Env.get( "AEROSPIKE_TEST_NAMESPACE", "test" );
@@ -23,19 +22,10 @@ public class AerospikeFixture extends EnvFixture {
     public AerospikeClient aerospikeClient;
 
     public AerospikeFixture() {
-        this( METHOD );
+        this( 300, 1 );
     }
 
     public AerospikeFixture( int maxConnsPerNode, int connPoolsPerNode ) {
-        this( METHOD, maxConnsPerNode, connPoolsPerNode );
-    }
-
-    public AerospikeFixture( Scope scope ) {
-        this( scope, 300, 1 );
-    }
-
-    public AerospikeFixture( Scope scope, int maxConnsPerNode, int connPoolsPerNode ) {
-        this.scope = scope;
         this.maxConnsPerNode = maxConnsPerNode;
         this.connPoolsPerNode = connPoolsPerNode;
 
@@ -45,28 +35,8 @@ public class AerospikeFixture extends EnvFixture {
     }
 
     @Override
-    public void beforeMethod() {
-        super.beforeMethod();
-
-        init( METHOD );
-    }
-
-    @Override
-    public void beforeClass() {
-        super.beforeClass();
-
-        init( CLASS );
-    }
-
-    @Override
-    public void beforeSuite() {
-        super.beforeSuite();
-
-        init( SUITE );
-    }
-
-    private void init( Scope scope ) {
-        if( this.scope != scope ) return;
+    protected void before() {
+        super.before();
 
         aerospikeClient = new AerospikeClient( HOST, PORT, true );
         aerospikeClient.maxConnsPerNode = maxConnsPerNode;
@@ -79,40 +49,24 @@ public class AerospikeFixture extends EnvFixture {
 
 
     public AerospikeFixture withScope( Scope scope ) {
-        this.scope = scope;
-
-        return this;
+        return ( AerospikeFixture ) super.withScope( scope );
     }
 
-    @SneakyThrows
     @Override
-    public void afterMethod() {
-        shutdown( METHOD );
-
-        super.afterMethod();
+    public AerospikeFixture withKind( Kind kind ) {
+        return ( AerospikeFixture ) super.withKind( kind );
     }
 
-    @SneakyThrows
     @Override
-    public void afterClass() {
-        shutdown( CLASS );
+    protected void after() {
+        try {
+            asDeleteAll();
+            aerospikeClient.close();
+        } catch( IOException e ) {
+            throw new UncheckedIOException( e );
+        }
 
-        super.afterClass();
-    }
-
-    @SneakyThrows
-    @Override
-    public void afterSuite() {
-        shutdown( SUITE );
-
-        super.afterSuite();
-    }
-
-    private void shutdown( Scope scope ) throws IOException {
-        if( this.scope != scope ) return;
-
-        asDeleteAll();
-        aerospikeClient.close();
+        super.after();
     }
 
     public void asDeleteAll() {
@@ -122,5 +76,9 @@ public class AerospikeFixture extends EnvFixture {
                 aerospikeClient.deleteAll( TEST_NAMESPACE, set, 2 );
             }
         } );
+    }
+
+    public AerospikeClient getClient() {
+        return aerospikeClient;
     }
 }

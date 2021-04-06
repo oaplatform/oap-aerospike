@@ -15,6 +15,7 @@ import oap.application.Kernel;
 import oap.application.module.Module;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
+import oap.time.JavaTimeService;
 import oap.util.Dates;
 import oap.util.Pair;
 import org.testng.annotations.BeforeMethod;
@@ -109,7 +110,7 @@ public class AerospikeClientTest extends Fixtures {
 
     @Test
     public void testGetSets() throws IOException {
-        try( var client = new AerospikeClient( AerospikeFixture.HOST, AerospikeFixture.PORT, true ) ) {
+        try( var client = new AerospikeClient( AerospikeFixture.HOST, AerospikeFixture.PORT, true, JavaTimeService.INSTANCE ) ) {
             client.start();
             client.waitConnectionEstablished();
 
@@ -121,7 +122,7 @@ public class AerospikeClientTest extends Fixtures {
 
     @Test
     public void testGenerationBins() throws IOException {
-        try( var client = new AerospikeClient( AerospikeFixture.HOST, AerospikeFixture.PORT, true ) ) {
+        try( var client = new AerospikeClient( AerospikeFixture.HOST, AerospikeFixture.PORT, true, JavaTimeService.INSTANCE ) ) {
             client.start();
             client.waitConnectionEstablished();
 
@@ -136,7 +137,7 @@ public class AerospikeClientTest extends Fixtures {
 
     @Test
     public void testFindAndModify() throws IOException {
-        try( var client = new AerospikeClient( AerospikeFixture.HOST, AerospikeFixture.PORT, true ) ) {
+        try( var client = new AerospikeClient( AerospikeFixture.HOST, AerospikeFixture.PORT, true, JavaTimeService.INSTANCE ) ) {
             client.start();
             client.waitConnectionEstablished();
 
@@ -165,7 +166,7 @@ public class AerospikeClientTest extends Fixtures {
 
     @Test
     public void testStream() throws IOException {
-        try( var client = new AerospikeClient( AerospikeFixture.HOST, AerospikeFixture.PORT, true ) ) {
+        try( var client = new AerospikeClient( AerospikeFixture.HOST, AerospikeFixture.PORT, true, JavaTimeService.INSTANCE ) ) {
             client.primaryKeyStored = true;
             client.start();
             client.waitConnectionEstablished();
@@ -185,7 +186,7 @@ public class AerospikeClientTest extends Fixtures {
 
     @Test
     public void testQuery() throws IOException, InterruptedException, ExecutionException, TimeoutException {
-        try( var client = new AerospikeClient( AerospikeFixture.HOST, AerospikeFixture.PORT, true ) ) {
+        try( var client = new AerospikeClient( AerospikeFixture.HOST, AerospikeFixture.PORT, true, JavaTimeService.INSTANCE ) ) {
             client.primaryKeyStored = true;
             client.start();
             client.waitConnectionEstablished();
@@ -214,7 +215,7 @@ public class AerospikeClientTest extends Fixtures {
 
     @Test
     public void testOperations() throws IOException, InterruptedException, TimeoutException {
-        try( var client = new AerospikeClient( AerospikeFixture.HOST, AerospikeFixture.PORT, true ) ) {
+        try( var client = new AerospikeClient( AerospikeFixture.HOST, AerospikeFixture.PORT, true, JavaTimeService.INSTANCE ) ) {
             client.primaryKeyStored = true;
             client.eventLoopSize = 1;
             client.maxCommandsInQueue = 1;

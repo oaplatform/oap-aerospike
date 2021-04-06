@@ -9,8 +9,8 @@ import com.aerospike.client.listener.RecordListener;
 import com.aerospike.client.policy.WritePolicy;
 import lombok.extern.slf4j.Slf4j;
 import oap.LogConsolidated;
+import oap.time.TimeService;
 import oap.util.Dates;
-import org.joda.time.DateTimeUtils;
 import org.slf4j.event.Level;
 
 import java.util.Optional;
@@ -27,13 +27,18 @@ public class AerospikeAsyncClient {
     private final com.aerospike.client.AerospikeClient aerospikeClient;
     private final EventLoops eventLoops;
     private final WritePolicy writePolicy;
+    private final TimeService timeService;
     private final LinkedBlockingQueue<Runnable> blockingQueue = new LinkedBlockingQueue<>();
     private final AtomicLong counter = new AtomicLong();
 
-    public AerospikeAsyncClient( com.aerospike.client.AerospikeClient aerospikeClient, EventLoops eventLoops, WritePolicy writePolicy ) {
+    public AerospikeAsyncClient( com.aerospike.client.AerospikeClient aerospikeClient,
+                                 EventLoops eventLoops,
+                                 WritePolicy writePolicy,
+                                 TimeService timeService ) {
         this.aerospikeClient = aerospikeClient;
         this.eventLoops = eventLoops;
         this.writePolicy = writePolicy;
+        this.timeService = timeService;
     }
 
     public Optional<Integer> operate( RecordListener recordListener, Key key, Operation... operations ) {
@@ -71,12 +76,12 @@ public class AerospikeAsyncClient {
     }
 
     public void waitTillComplete( long count, long timeout, TimeUnit unit ) throws InterruptedException, TimeoutException {
-        var start = DateTimeUtils.currentTimeMillis();
+        var start = timeService.currentTimeMillis();
 
         processQueue( 0 );
 
         while( counter.get() < count ) {
-            if( DateTimeUtils.currentTimeMillis() - start >= unit.toMillis( timeout ) )
+            if( timeService.currentTimeMillis() - start >= unit.toMillis( timeout ) )
                 throw new TimeoutException();
 
             Thread.sleep( 1 );

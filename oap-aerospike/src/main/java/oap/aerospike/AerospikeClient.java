@@ -41,6 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 import oap.LogConsolidated;
 import oap.concurrent.Threads;
 import oap.io.Closeables;
+import oap.time.TimeService;
 import oap.util.Dates;
 import oap.util.Pair;
 import oap.util.Result;
@@ -99,6 +100,7 @@ public class AerospikeClient implements Closeable {
     public final InfoPolicy infoPolicy;
     private final List<String> hosts;
     private final boolean forceSingleNode;
+    private final TimeService timeService;
     private final int port;
     private final Lock connectionLock = new ReentrantLock();
     public int maxConnsPerNode = 300;
@@ -126,9 +128,10 @@ public class AerospikeClient implements Closeable {
     private AerospikeCluster cluster;
     private EventPolicy eventPolicy;
 
-    public AerospikeClient( String hosts, int port, boolean forceSingleNode ) {
+    public AerospikeClient( String hosts, int port, boolean forceSingleNode, TimeService timeService ) {
         this.hosts = List.of( StringUtils.split( hosts, ',' ) ).stream().map( String::trim ).collect( toList() );
         this.forceSingleNode = forceSingleNode;
+        this.timeService = timeService;
         infoPolicy = new InfoPolicy();
         this.port = port;
     }
@@ -689,7 +692,7 @@ public class AerospikeClient implements Closeable {
 
     public Result<AerospikeAsyncClient, AerospikeException> operations() {
         var connectionResult = getConnection();
-        return connectionResult.mapSuccess( ac -> new AerospikeAsyncClient( ac, eventLoops, writePolicy ) );
+        return connectionResult.mapSuccess( ac -> new AerospikeAsyncClient( ac, eventLoops, writePolicy, timeService ) );
     }
 
     public Stream<Pair<Key, Record>> stream( String namespace, String set ) throws AerospikeException {

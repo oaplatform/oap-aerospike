@@ -28,7 +28,7 @@
 
         <oap.deps.oap.version>9.0.42</oap.deps.oap.version>
         <oap.deps.slf4j.version>1.7.30</oap.deps.slf4j.version>
-        <oap.deps.lombok.version>1.18.18</oap.deps.lombok.version>
+        <oap.deps.lombok.version>1.18.20</oap.deps.lombok.version>
         <oap.deps.logback.version>1.2.3</oap.deps.logback.version>
         <oap.deps.aerospike.version>5.0.4</oap.deps.aerospike.version>
     </properties>

@@ -1,7 +1,7 @@
 package oap.aerospike;
 
 import oap.system.Env;
-import oap.testng.EnvFixture;
+import oap.testng.AbstractEnvFixture;
 import oap.time.JodaTimeService;
 import oap.util.Dates;
 
@@ -14,7 +14,7 @@ import java.io.UncheckedIOException;
  * - AEROSPIKE_HOSTS
  * - AEROSPIKE_PORT
  */
-public class AerospikeFixture extends EnvFixture<AerospikeFixture> {
+public class AerospikeFixture extends AbstractEnvFixture<AerospikeFixture> {
     public static final String TEST_NAMESPACE = Env.get( "AEROSPIKE_TEST_NAMESPACE", "test" );
     public static final String HOST = Env.get( "AEROSPIKE_HOSTS", "localhost" );
     public static final int PORT = Integer.parseInt( Env.get( "AEROSPIKE_PORT", "3000" ) );

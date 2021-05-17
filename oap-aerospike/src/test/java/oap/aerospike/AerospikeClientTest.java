@@ -58,7 +58,7 @@ public class AerospikeClientTest extends Fixtures {
         try {
             kernel.start( pathOfResource( getClass(), "/test-application.conf" ) );
 
-            var client = kernel.serviceOfClass( "oap-aerospike", AerospikeClient.class ).get();
+            var client = kernel.<AerospikeClient>service( "oap-aerospike", "aerospike-client-writer" ).get();
             client.waitConnectionEstablished();
             client.deleteAll( "test", "test", 2 );
 

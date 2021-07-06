@@ -1,11 +1,35 @@
 package oap.aerospike;
 
+import com.aerospike.client.AerospikeException;
+import com.aerospike.client.BatchRead;
+import com.aerospike.client.Bin;
+import com.aerospike.client.Host;
+import com.aerospike.client.Info;
+import com.aerospike.client.Key;
+import com.aerospike.client.Log;
 import com.aerospike.client.Record;
-import com.aerospike.client.*;
-import com.aerospike.client.async.*;
+import com.aerospike.client.ResultCode;
+import com.aerospike.client.async.EventLoop;
+import com.aerospike.client.async.EventLoops;
+import com.aerospike.client.async.EventPolicy;
+import com.aerospike.client.async.NioEventLoops;
+import com.aerospike.client.async.Throttles;
 import com.aerospike.client.cluster.Node;
-import com.aerospike.client.listener.*;
-import com.aerospike.client.policy.*;
+import com.aerospike.client.listener.BatchListListener;
+import com.aerospike.client.listener.BatchSequenceListener;
+import com.aerospike.client.listener.DeleteListener;
+import com.aerospike.client.listener.RecordListener;
+import com.aerospike.client.listener.RecordSequenceListener;
+import com.aerospike.client.listener.WriteListener;
+import com.aerospike.client.policy.BatchPolicy;
+import com.aerospike.client.policy.ClientPolicy;
+import com.aerospike.client.policy.CommitLevel;
+import com.aerospike.client.policy.GenerationPolicy;
+import com.aerospike.client.policy.InfoPolicy;
+import com.aerospike.client.policy.Policy;
+import com.aerospike.client.policy.Replica;
+import com.aerospike.client.policy.ScanPolicy;
+import com.aerospike.client.policy.WritePolicy;
 import com.aerospike.client.query.Filter;
 import com.aerospike.client.query.IndexCollectionType;
 import com.aerospike.client.query.IndexType;
@@ -30,8 +54,21 @@ import org.slf4j.event.Level;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.Set;
+import java.util.Spliterators;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -803,7 +840,7 @@ public class AerospikeClient implements Closeable {
         private final Record[] records;
         private final ArrayListMultimap<BatchRead, Integer> keys = ArrayListMultimap.create();
 
-        public CompletableFutureBatchSequenceListener( List<BatchRead> batchReads ) {
+        private CompletableFutureBatchSequenceListener( List<BatchRead> batchReads ) {
             this.records = new Record[batchReads.size()];
             for( var i = 0; i < batchReads.size(); i++ ) {
                 this.keys.put( batchReads.get( i ), i );

@@ -1,32 +1,11 @@
 package oap.aerospike;
 
-import com.aerospike.client.AerospikeException;
-import com.aerospike.client.Bin;
-import com.aerospike.client.Host;
-import com.aerospike.client.Info;
-import com.aerospike.client.Key;
-import com.aerospike.client.Log;
 import com.aerospike.client.Record;
-import com.aerospike.client.ResultCode;
-import com.aerospike.client.async.EventLoop;
-import com.aerospike.client.async.EventLoops;
-import com.aerospike.client.async.EventPolicy;
-import com.aerospike.client.async.NioEventLoops;
-import com.aerospike.client.async.Throttles;
+import com.aerospike.client.*;
+import com.aerospike.client.async.*;
 import com.aerospike.client.cluster.Node;
-import com.aerospike.client.listener.DeleteListener;
-import com.aerospike.client.listener.RecordListener;
-import com.aerospike.client.listener.RecordSequenceListener;
-import com.aerospike.client.listener.WriteListener;
-import com.aerospike.client.policy.BatchPolicy;
-import com.aerospike.client.policy.ClientPolicy;
-import com.aerospike.client.policy.CommitLevel;
-import com.aerospike.client.policy.GenerationPolicy;
-import com.aerospike.client.policy.InfoPolicy;
-import com.aerospike.client.policy.Policy;
-import com.aerospike.client.policy.Replica;
-import com.aerospike.client.policy.ScanPolicy;
-import com.aerospike.client.policy.WritePolicy;
+import com.aerospike.client.listener.*;
+import com.aerospike.client.policy.*;
 import com.aerospike.client.query.Filter;
 import com.aerospike.client.query.IndexCollectionType;
 import com.aerospike.client.query.IndexType;
@@ -51,21 +30,8 @@ import org.slf4j.event.Level;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.Set;
-import java.util.Spliterators;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -89,6 +55,7 @@ public class AerospikeClient implements Closeable {
     public static final int ERROR_CODE_REJECTED = -10101012;
     public static final int ERROR_CODE_INTERRUPTED = -10101013;
     public static final Counter METRIC_READ_SUCCESS = Metrics.counter( "aerospike_client", Tags.of( "type", "read", "status", "success", "code", "unknown" ) );
+    public static final Counter METRIC_READ_BATCH_SUCCESS = Metrics.counter( "aerospike_client", Tags.of( "type", "read_batch", "status", "success", "code", "unknown" ) );
     public static final Counter METRIC_WRITE_SUCCESS = Metrics.counter( "aerospike_client", Tags.of( "type", "write", "status", "success", "code", "unknown" ) );
     private static final Pair<Key, Record> END = __( new Key( "", "", "" ), new Record( Map.of(), -1, -1 ) );
 
@@ -320,7 +287,7 @@ public class AerospikeClient implements Closeable {
                         if( e != null ) {
                             return Optional.of( getResultCode( e ) );
                         } else {
-                            return Optional.empty();
+                            return Optional.<Integer>empty();
                         }
                     } );
             } catch( AerospikeException e ) {
@@ -599,6 +566,34 @@ public class AerospikeClient implements Closeable {
         }, readTimeout ).ifSuccess( r -> METRIC_READ_SUCCESS.increment() );
     }
 
+    /**
+     * Asynchronously read multiple records for specified batch keys in one batch call.
+     * This method registers the command with an event loop and returns.
+     * The event loop thread will process the command and send the results to the listener.
+     * <p>
+     * This method allows different namespaces/bins to be requested for each key in the batch.
+     * The returned records are located in the same list.
+     * If the BatchRead key field is not found, the corresponding record field will be null.
+     * The policy can be used to specify timeouts.
+     * <p>
+     * If `strict` is `true`   - a batch request to a node fails, the entire batch is cancelled.
+     * If `strict` is `false`  - a batch request to a node fails, responses from other nodes will continue to
+     * be processed
+     */
+    public Result<Record[], State> get( List<BatchRead> batchReads, boolean strict ) {
+        return getConnectionAndGetRecord( ( connection, eventLoop ) -> {
+            if( strict ) {
+                var listener = new CompletableFutureBatchListListener();
+                connection.get( eventLoop, listener, batchPolicy, batchReads );
+                return listener.completableFuture;
+            } else {
+                var listener = new CompletableFutureBatchSequenceListener( batchReads );
+                connection.get( eventLoop, listener, batchPolicy, batchReads );
+                return listener.completableFuture;
+            }
+        }, batchTimeout ).ifSuccess( r -> METRIC_READ_BATCH_SUCCESS.increment() );
+    }
+
     public CompletableFuture<Optional<Integer>> query( String namespace, String set, String indexName, Filter filter, Consumer<Pair<Key, Record>> func, String... binNames ) {
         var f = new CompletableFuture<Optional<Integer>>();
         var connection = getConnection();
@@ -778,6 +773,53 @@ public class AerospikeClient implements Closeable {
         @Override
         public void onSuccess( Key key, Record record ) {
             completableFuture.complete( record );
+        }
+
+        @Override
+        public void onFailure( AerospikeException exception ) {
+            LogConsolidated.log( log, Level.TRACE, s( 5 ), exception.getMessage(), exception );
+            completableFuture.completeExceptionally( exception );
+        }
+    }
+
+    private static class CompletableFutureBatchListListener implements BatchListListener {
+        public final CompletableFuture<Record[]> completableFuture = new CompletableFuture<>();
+
+        @Override
+        public void onSuccess( List<BatchRead> records ) {
+            var array = oap.util.Stream.of( records ).map( r -> r.record ).toArray();
+            completableFuture.complete( ( Record[] ) array );
+        }
+
+        @Override
+        public void onFailure( AerospikeException exception ) {
+            LogConsolidated.log( log, Level.TRACE, s( 5 ), exception.getMessage(), exception );
+            completableFuture.completeExceptionally( exception );
+        }
+    }
+
+    private static class CompletableFutureBatchSequenceListener implements BatchSequenceListener {
+        public final CompletableFuture<Record[]> completableFuture = new CompletableFuture<>();
+        private final Record[] records;
+        private final ArrayListMultimap<BatchRead, Integer> keys = ArrayListMultimap.create();
+
+        public CompletableFutureBatchSequenceListener( List<BatchRead> batchReads ) {
+            this.records = new Record[batchReads.size()];
+            for( var i = 0; i < batchReads.size(); i++ ) {
+                this.keys.put( batchReads.get( i ), i );
+            }
+        }
+
+        @Override
+        public void onRecord( BatchRead record ) {
+            var index = keys.get( record );
+            Preconditions.checkNotNull( index );
+            index.forEach( idx -> records[idx] = record.record );
+        }
+
+        @Override
+        public void onSuccess() {
+            completableFuture.complete( records );
         }
 
         @Override

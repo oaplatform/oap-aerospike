@@ -1,6 +1,7 @@
 package oap.aerospike;
 
 import com.aerospike.client.AerospikeException;
+import com.aerospike.client.BatchRead;
 import com.aerospike.client.Key;
 import com.aerospike.client.Record;
 import com.aerospike.client.Value;
@@ -132,6 +133,30 @@ public class AerospikeClientTest extends Fixtures {
 
             assertThat( client.update( TEST_NAMESPACE, "test", "id1", record.successValue.generation, Map.of( "b1", "v1" ), 1 ) ).isEmpty();
             assertThat( client.update( TEST_NAMESPACE, "test", "id1", record.successValue.generation, Map.of( "b1", "v2" ), 1 ) ).isPresent();
+        }
+    }
+
+    @Test
+    public void testBatchRead() throws Exception {
+        try( var client = new AerospikeClient( AerospikeFixture.HOST, AerospikeFixture.PORT, true, JavaTimeService.INSTANCE ) ) {
+            client.start();
+            client.waitConnectionEstablished();
+
+            client.update( TEST_NAMESPACE, "set1", "id1", "b1", "v1", 1 );
+            client.update( TEST_NAMESPACE, "set1", "id1", "b2", "v2", 1 );
+            client.update( TEST_NAMESPACE, "set2", "id1", "c1", "v3", 1 );
+
+            var result = client.get(
+                List.of(
+                    new BatchRead( new Key( TEST_NAMESPACE, "set1", "id1" ), new String[] { "b1", "b2" } ),
+                    new BatchRead( new Key( TEST_NAMESPACE, "set2", "id1" ), new String[] { "c1" } )
+                ),
+                false );
+
+            assertThat( result.successValue ).isNotNull();
+            assertThat( result.successValue[0].getString( "b1" ) ).isEqualTo( "v1" );
+            assertThat( result.successValue[0].getString( "b2" ) ).isEqualTo( "v2" );
+            assertThat( result.successValue[1].getString( "c1" ) ).isEqualTo( "v3" );
         }
     }
 

@@ -24,7 +24,7 @@
     </repositories>
 
     <properties>
-        <oap.aerospike.project.version>4.1.2</oap.aerospike.project.version>
+        <oap.aerospike.project.version>4.1.3</oap.aerospike.project.version>
 
         <oap.deps.oap.version>9.4.2</oap.deps.oap.version>
         <oap.deps.slf4j.version>1.7.30</oap.deps.slf4j.version>

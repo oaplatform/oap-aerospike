@@ -71,7 +71,7 @@ public class AerospikeCluster implements Closeable {
         var cluster = client.getCluster();
 
         var nodes = cluster.getNodes();
-        var peers = new Peers( nodes.length + 16, 16 );
+        var peers = new Peers( nodes.length + 16 );
 
         for( var node : nodes ) {
             setReferenceCount( node, 0 );

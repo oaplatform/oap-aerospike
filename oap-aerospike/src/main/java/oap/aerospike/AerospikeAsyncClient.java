@@ -1,11 +1,13 @@
 package oap.aerospike;
 
 import com.aerospike.client.AerospikeException;
+import com.aerospike.client.Bin;
 import com.aerospike.client.Key;
 import com.aerospike.client.Operation;
 import com.aerospike.client.Record;
 import com.aerospike.client.async.EventLoops;
 import com.aerospike.client.listener.RecordListener;
+import com.aerospike.client.listener.WriteListener;
 import com.aerospike.client.policy.WritePolicy;
 import lombok.extern.slf4j.Slf4j;
 import oap.LogConsolidated;
@@ -68,6 +70,32 @@ public class AerospikeAsyncClient {
         }
     }
 
+    public Optional<Integer> put( WriteListener writeListener, Key key, Bin... bins ) {
+        try {
+            processQueue( 1 );
+
+            var blockingQueueWriteListener = new BlockingQueueWriteListener( writeListener );
+
+            var proc = new Runnable() {
+                @Override
+                public void run() {
+                    aerospikeClient.put( eventLoops.next(), blockingQueueWriteListener, writePolicy, key, bins );
+                }
+            };
+
+            blockingQueueWriteListener.proc = proc;
+
+            proc.run();
+
+            return Optional.empty();
+        } catch( AerospikeException e ) {
+            LogConsolidated.log( log, Level.ERROR, Dates.s( 5 ), e.getMessage(), null );
+            return Optional.of( e.getResultCode() );
+        } catch( InterruptedException e ) {
+            return Optional.of( AerospikeClient.ERROR_CODE_INTERRUPTED );
+        }
+    }
+
     private void processQueue( int sleep ) throws InterruptedException {
         while( !blockingQueue.isEmpty() ) {
             if( sleep > 0 ) Thread.sleep( sleep );
@@ -110,6 +138,30 @@ public class AerospikeAsyncClient {
                 blockingQueue.add( proc );
             } else {
                 recordListener.onFailure( exception );
+            }
+        }
+    }
+
+    private class BlockingQueueWriteListener implements WriteListener {
+        private final WriteListener writeListener;
+        public Runnable proc;
+
+        private BlockingQueueWriteListener( WriteListener writeListener ) {
+            this.writeListener = writeListener;
+        }
+
+        @Override
+        public void onSuccess( Key key ) {
+            writeListener.onSuccess( key );
+            counter.incrementAndGet();
+        }
+
+        @Override
+        public void onFailure( AerospikeException exception ) {
+            if( exception instanceof AerospikeException.AsyncQueueFull ) {
+                blockingQueue.add( proc );
+            } else {
+                writeListener.onFailure( exception );
             }
         }
     }

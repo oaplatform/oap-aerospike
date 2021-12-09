@@ -26,7 +26,7 @@
     <properties>
         <oap-aerospike.project.version>17.4.2.0</oap-aerospike.project.version>
 
-        <oap.deps.oap.version>17.10.0.0</oap.deps.oap.version>
+        <oap.deps.oap.version>17.10.0.1</oap.deps.oap.version>
         <oap.deps.slf4j.version>1.7.32</oap.deps.slf4j.version>
         <oap.deps.lombok.version>1.18.22</oap.deps.lombok.version>
         <oap.deps.logback.version>1.2.7</oap.deps.logback.version>

@@ -4,7 +4,7 @@
 
     <packaging>pom</packaging>
     <artifactId>oap-aerospike-parent</artifactId>
-    <version>${oap.aerospike.project.version}</version>
+    <version>${oap-aerospike.project.version}</version>
 
     <parent>
         <groupId>oap</groupId>
@@ -24,7 +24,7 @@
     </repositories>
 
     <properties>
-        <oap.aerospike.project.version>17.4.2.0</oap.aerospike.project.version>
+        <oap-aerospike.project.version>17.4.2.0</oap-aerospike.project.version>
 
         <oap.deps.oap.version>17.10.0.0</oap.deps.oap.version>
         <oap.deps.slf4j.version>1.7.32</oap.deps.slf4j.version>

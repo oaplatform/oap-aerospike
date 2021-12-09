@@ -14,7 +14,7 @@
     <parent>
         <groupId>oap</groupId>
         <artifactId>oap-aerospike-parent</artifactId>
-        <version>${oap.aerospike.project.version}</version>
+        <version>${oap-aerospike.project.version}</version>
     </parent>
 
     <dependencies>

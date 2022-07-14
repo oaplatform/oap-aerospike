@@ -226,7 +226,7 @@ public class AerospikeClientTest extends Fixtures {
 
 
                 var res = new ArrayList<Pair<Key, Record>>();
-                var resultFuture = client.query( TEST_NAMESPACE, "test", "test_index", Filter.equal( "test_bin", 1 ), p -> res.add( p ),
+                var resultFuture = client.query( TEST_NAMESPACE, "test", "test_index", Filter.contains( "test_bin",  IndexCollectionType.LIST, 1 ), res::add,
                     "test_bin" );
                 var result = resultFuture.get( 10, TimeUnit.SECONDS );
                 assertThat( result ).isEmpty();

@@ -663,6 +663,7 @@ public class AerospikeClient implements Closeable {
 
                 @Override
                 public void onFailure( AerospikeException exception ) {
+                    LogConsolidated.log( log, Level.ERROR, s( 5 ), exception.getMessage(), exception );
                     getMetricReadError( exception.getResultCode() ).increment();
                     f.complete( Optional.of( exception.getResultCode() ) );
                 }

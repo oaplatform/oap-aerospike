@@ -511,6 +511,7 @@ public class AerospikeClient implements Closeable {
         } catch( TimeoutException e ) {
             getMetricReadError( ERROR_CODE_CLIENT_TIMEOUT ).increment();
         } catch( Exception e ) {
+            LogConsolidated.log( log, Level.ERROR, s( 5 ), e.getMessage(), e );
             getMetricReadError( ERROR_CODE_UNKNOWN ).increment();
         }
 

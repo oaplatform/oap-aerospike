@@ -66,6 +66,7 @@ public class AerospikeAsyncClient {
             LogConsolidated.log( log, Level.ERROR, Dates.s( 5 ), e.getMessage(), null );
             return Optional.of( e.getResultCode() );
         } catch( InterruptedException e ) {
+            Thread.currentThread().interrupt();
             return Optional.of( AerospikeClient.ERROR_CODE_INTERRUPTED );
         }
     }
@@ -92,6 +93,7 @@ public class AerospikeAsyncClient {
             LogConsolidated.log( log, Level.ERROR, Dates.s( 5 ), e.getMessage(), null );
             return Optional.of( e.getResultCode() );
         } catch( InterruptedException e ) {
+            Thread.currentThread().interrupt();
             return Optional.of( AerospikeClient.ERROR_CODE_INTERRUPTED );
         }
     }
@@ -112,7 +114,7 @@ public class AerospikeAsyncClient {
             if( timeService.currentTimeMillis() - start >= unit.toMillis( timeout ) )
                 throw new TimeoutException();
 
-            Thread.sleep( 1 );
+            Thread.sleep( 1 ); // granularity is about 5 ms so not good enough
             processQueue( 0 );
         }
     }

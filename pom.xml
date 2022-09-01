@@ -1,35 +1,49 @@
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>oap</groupId>
+        <artifactId>oap.maven</artifactId>
+        <version>17.3.2.0</version>
+    </parent>
 
     <packaging>pom</packaging>
     <artifactId>oap-aerospike-parent</artifactId>
     <version>${oap-aerospike.project.version}</version>
 
-    <parent>
-        <groupId>oap</groupId>
-        <artifactId>oap.maven</artifactId>
-        <version>17.3.0.8</version>
-    </parent>
-
     <modules>
         <module>oap-aerospike</module>
     </modules>
 
+    <properties>
+        <oap-aerospike.project.version>17.4.4.2</oap-aerospike.project.version>
+
+        <oap.deps.oap.version>17.10.25.0</oap.deps.oap.version>
+        <oap.deps.aerospike.version>6.1.0</oap.deps.aerospike.version>
+        <oap.deps.logback.version>1.2.7</oap.deps.logback.version>
+        <oap.deps.lombok.version>1.18.24</oap.deps.lombok.version>
+        <oap.deps.slf4j.version>1.7.32</oap.deps.slf4j.version>
+    </properties>
+
     <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+        <repository>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <id>central</id>
+            <name>bintray</name>
+            <url>https://jcenter.bintray.com</url>
+        </repository>
         <repository>
             <id>oap</id>
             <url>https://mvn.oaplatform.org</url>
         </repository>
     </repositories>
-
-    <properties>
-        <oap-aerospike.project.version>17.4.4.1</oap-aerospike.project.version>
-        <oap.deps.oap.version>17.10.24.2</oap.deps.oap.version>
-
-        <oap.deps.slf4j.version>1.7.32</oap.deps.slf4j.version>
-        <oap.deps.lombok.version>1.18.24</oap.deps.lombok.version>
-        <oap.deps.logback.version>1.2.7</oap.deps.logback.version>
-        <oap.deps.aerospike.version>6.1.0</oap.deps.aerospike.version>
-    </properties>
 </project>

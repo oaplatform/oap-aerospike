@@ -323,11 +323,10 @@ public class AerospikeClient implements Closeable {
                     .handle( ( r, e ) -> {
                         if( e != null ) {
                             return Optional.of( getResultCode( e ) );
-                        } else {
-                            return Optional.<Integer>empty();
                         }
+                        return Optional.<Integer>empty();
                     } );
-            } catch( AerospikeException e ) {
+            } catch( Exception e ) {
                 return CompletableFuture.failedFuture( e );
             }
         }, writeTimeout );
@@ -362,7 +361,7 @@ public class AerospikeClient implements Closeable {
             task.waitTillComplete();
             log.info( "creating index {}/{}/{} on bin {}... Done.", namespace, set, indexName, binName );
         } catch( AerospikeException e ) {
-            log.error( e.getMessage(), e );
+            log.error( "Could not create index '{}'", indexName, e );
             return Optional.of( e.getResultCode() );
         }
 
@@ -382,7 +381,7 @@ public class AerospikeClient implements Closeable {
             task.waitTillComplete();
             log.info( "droppping index {}/{}/{}... Done.", namespace, set, indexName );
         } catch( AerospikeException e ) {
-            log.error( e.getMessage(), e );
+            log.error( "Could not drop index '{}'", indexName, e );
             return Optional.of( e.getResultCode() );
         }
 
@@ -451,7 +450,11 @@ public class AerospikeClient implements Closeable {
         } catch( AerospikeException.AsyncQueueFull e ) {
             getMetricReadError( ERROR_CODE_REJECTED ).increment();
             return Optional.of( ERROR_CODE_REJECTED );
-        } catch( InterruptedException | ExecutionException e ) {
+        } catch( InterruptedException e ) {
+            Thread.currentThread().interrupt();
+            getMetricReadError( ERROR_CODE_INTERRUPTED ).increment();
+            return Optional.of( ERROR_CODE_INTERRUPTED );
+        } catch( ExecutionException e ) {
             getMetricReadError( ERROR_CODE_UNKNOWN ).increment();
             return Optional.of( ERROR_CODE_UNKNOWN );
         } catch( TimeoutException e ) {
@@ -510,6 +513,9 @@ public class AerospikeClient implements Closeable {
             getMetricReadError( ERROR_CODE_REJECTED ).increment();
         } catch( TimeoutException e ) {
             getMetricReadError( ERROR_CODE_CLIENT_TIMEOUT ).increment();
+        } catch( InterruptedException e ) {
+            Thread.currentThread().interrupt();
+            getMetricReadError( ERROR_CODE_INTERRUPTED ).increment();
         } catch( Exception e ) {
             LogConsolidated.log( log, Level.ERROR, s( 5 ), e.getMessage(), e );
             getMetricReadError( ERROR_CODE_UNKNOWN ).increment();
@@ -533,6 +539,7 @@ public class AerospikeClient implements Closeable {
         if( ex instanceof ExecutionException ) {
             return registerException( ex.getCause() );
         } else if( ex instanceof InterruptedException ) {
+            Thread.currentThread().interrupt();
             getMetricWriteError( ERROR_CODE_INTERRUPTED ).increment();
             return Optional.of( ERROR_CODE_INTERRUPTED );
         } else if( ex instanceof AerospikeException.AsyncQueueFull ) {
@@ -624,11 +631,10 @@ public class AerospikeClient implements Closeable {
                 var listener = new CompletableFutureBatchListListener();
                 connection.get( eventLoop, listener, batchPolicy, batchReads );
                 return listener.completableFuture;
-            } else {
-                var listener = new CompletableFutureBatchSequenceListener( batchReads );
-                connection.get( eventLoop, listener, batchPolicy, batchReads );
-                return listener.completableFuture;
             }
+            var listener = new CompletableFutureBatchSequenceListener( batchReads );
+            connection.get( eventLoop, listener, batchPolicy, batchReads );
+            return listener.completableFuture;
         }, batchTimeout ).ifSuccess( r -> METRIC_READ_BATCH_SUCCESS.increment() );
     }
 
@@ -717,8 +723,8 @@ public class AerospikeClient implements Closeable {
                         Thread.sleep( 1 );
                     }
                 } catch( InterruptedException ignored ) {
+                    Thread.currentThread().interrupt();
                 }
-
                 return Optional.empty();
             } );
         }, writeTimeout );
@@ -759,6 +765,7 @@ public class AerospikeClient implements Closeable {
                 try {
                     queue.put( END );
                 } catch( InterruptedException e ) {
+                    Thread.currentThread().interrupt();
                     ex.setValue( new AerospikeException( e ) );
                 }
             } );

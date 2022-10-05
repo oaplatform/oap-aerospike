@@ -16,18 +16,10 @@ public class AerospikeLog implements Log.Callback {
     @Override
     public void log( Log.Level level, String message ) {
         switch( level ) {
-            case DEBUG:
-                log.trace( message );
-                break;
-            case INFO:
-                log.debug( message );
-                break;
-            case ERROR:
-                log.warn( message );
-                break;
-            case WARN:
-                log.info( message );
-                break;
+            case DEBUG -> log.trace( message );
+            case INFO -> log.debug( message );
+            case ERROR -> log.warn( message );
+            case WARN -> log.info( message );
         }
     }
 }

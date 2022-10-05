@@ -1,5 +1,6 @@
 package oap.aerospike;
 
+import aQute.service.reporter.Messages;
 import com.aerospike.client.AerospikeException;
 import com.aerospike.client.BatchRead;
 import com.aerospike.client.Bin;
@@ -226,29 +227,28 @@ public class AerospikeClient implements Closeable {
     }
 
     public Result<com.aerospike.client.AerospikeClient, AerospikeException> getConnection() throws AerospikeException {
-        if( baseClient == null ) {
-            if( connectionLock.tryLock() ) {
-                try {
-                    if( baseClient == null ) {
-                        log.trace( "connecting..." );
+        if( baseClient != null ) return Result.success( baseClient );
+        if( connectionLock.tryLock() ) {
+            try {
+                if( baseClient == null ) {
+                    log.trace( "Connecting to aerospike..." );
 
-                        var hosts = this.hosts.stream().map( h -> new Host( h, port ) ).toArray( Host[]::new );
-                        try {
-                            baseClient = new com.aerospike.client.AerospikeClient( clientPolicy, hosts );
-                            var nodes = baseClient.getNodes();
-                            log.info( "nodes = {}", Stream.of( nodes ).map( Node::getHost ).collect( toList() ) );
+                    var hosts = this.hosts.stream().map( h -> new Host( h, port ) ).toArray( Host[]::new );
+                    try {
+                        baseClient = new com.aerospike.client.AerospikeClient( clientPolicy, hosts );
+                        var nodes = baseClient.getNodes();
+                        log.trace( "nodes = {}", Stream.of( nodes ).map( Node::getHost ).collect( toList() ) );
 
-                            cluster = new AerospikeCluster( forceSingleNode, clientPolicy.tendInterval, baseClient );
+                        cluster = new AerospikeCluster( forceSingleNode, clientPolicy.tendInterval, baseClient );
 
-                            log.trace( "connecting... Done" );
-                        } catch( AerospikeException e ) {
-                            LogConsolidated.log( log, Level.TRACE, s( 5 ), e.getMessage(), e );
-                            return Result.failure( e );
-                        }
+                        log.trace( "Connection established. Client is ready" );
+                    } catch( AerospikeException e ) {
+                        LogConsolidated.log( log, Level.TRACE, s( 5 ), e.getMessage(), e );
+                        return Result.failure( e );
                     }
-                } finally {
-                    connectionLock.unlock();
                 }
+            } finally {
+                connectionLock.unlock();
             }
         }
         return Result.success( baseClient );
@@ -354,7 +354,7 @@ public class AerospikeClient implements Closeable {
         if( !connection.isSuccess() ) return Optional.of( connection.failureValue.getResultCode() );
 
         try {
-            log.info( "creating index {}/{}/{} on bin {}...", namespace, set, indexName, binName );
+            log.debug( "creating index {}/{}/{} on bin {}...", namespace, set, indexName, binName );
             var policy = new Policy();
             policy.setTimeout( ( int ) indexTimeout );
             var task = connection.successValue.createIndex( policy, namespace, set, indexName, binName, indexType, indexCollectionType );
@@ -374,12 +374,12 @@ public class AerospikeClient implements Closeable {
         if( !connection.isSuccess() ) return Optional.of( connection.failureValue.getResultCode() );
 
         try {
-            log.info( "droppping index {}/{}/{}...", namespace, set, indexName );
+            log.debug( "dropping index {}/{}/{}...", namespace, set, indexName );
             var policy = new Policy();
             policy.setTimeout( ( int ) indexTimeout );
             var task = connection.successValue.dropIndex( policy, namespace, set, indexName );
             task.waitTillComplete();
-            log.info( "droppping index {}/{}/{}... Done.", namespace, set, indexName );
+            log.info( "dropping index {}/{}/{}... Done.", namespace, set, indexName );
         } catch( AerospikeException e ) {
             log.error( "Could not drop index '{}'", indexName, e );
             return Optional.of( e.getResultCode() );
@@ -454,12 +454,13 @@ public class AerospikeClient implements Closeable {
             Thread.currentThread().interrupt();
             getMetricReadError( ERROR_CODE_INTERRUPTED ).increment();
             return Optional.of( ERROR_CODE_INTERRUPTED );
-        } catch( ExecutionException e ) {
-            getMetricReadError( ERROR_CODE_UNKNOWN ).increment();
-            return Optional.of( ERROR_CODE_UNKNOWN );
         } catch( TimeoutException e ) {
             getMetricReadError( ERROR_CODE_CLIENT_TIMEOUT ).increment();
             return Optional.of( ERROR_CODE_CLIENT_TIMEOUT );
+        } catch( Exception e ) {
+            LogConsolidated.log( log, Level.ERROR, s( 5 ), e.getMessage(), e );
+            getMetricReadError( ERROR_CODE_UNKNOWN ).increment();
+            return Optional.of( ERROR_CODE_UNKNOWN );
         }
     }
 
@@ -530,7 +531,7 @@ public class AerospikeClient implements Closeable {
             if( !connection.isSuccess() ) return Optional.of( connection.failureValue.getResultCode() );
             var res = func.apply( connection.successValue, eventLoops.next() );
             return res.get( timeout, TimeUnit.MILLISECONDS );
-        } catch( Throwable e ) {
+        } catch( Exception e ) {
             return registerException( e );
         }
     }
@@ -680,6 +681,11 @@ public class AerospikeClient implements Closeable {
             getMetricReadError( e.getResultCode() ).increment();
             f.complete( Optional.of( e.getResultCode() ) );
             return f;
+        } catch( Exception e ) {
+            LogConsolidated.log( log, Level.ERROR, s( 5 ), e.getMessage(), e );
+            getMetricReadError( ERROR_CODE_UNKNOWN ).increment();
+            f.complete( Optional.of( ERROR_CODE_UNKNOWN ) );
+            return f;
         }
     }
 
@@ -755,6 +761,7 @@ public class AerospikeClient implements Closeable {
                         try {
                             queue.put( __( key, record ) );
                         } catch( InterruptedException e ) {
+                            Thread.currentThread().interrupt();
                             throw new AerospikeException( e );
                         }
                     } );
@@ -784,6 +791,7 @@ public class AerospikeClient implements Closeable {
                 try {
                     v = queue.take();
                 } catch( InterruptedException e ) {
+                    Thread.currentThread().interrupt();
                     throw new AerospikeException( e );
                 }
                 return v != END;

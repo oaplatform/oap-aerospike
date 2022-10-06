@@ -20,6 +20,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  * Created by igor.petrenko on 2020-11-20.
@@ -49,18 +50,9 @@ public class AerospikeAsyncClient {
             processQueue( 1 );
 
             var blockingQueueRecordListener = new BlockingQueueRecordListener( recordListener );
-
-            var proc = new Runnable() {
-                @Override
-                public void run() {
-                    aerospikeClient.operate( eventLoops.next(), blockingQueueRecordListener, writePolicy, key, operations );
-                }
-            };
-
+            Runnable proc = () -> aerospikeClient.operate( eventLoops.next(), blockingQueueRecordListener, writePolicy, key, operations );
             blockingQueueRecordListener.proc = proc;
-
             proc.run();
-
             return Optional.empty();
         } catch( AerospikeException e ) {
             LogConsolidated.log( log, Level.ERROR, Dates.s( 5 ), e.getMessage(), null );
@@ -76,18 +68,9 @@ public class AerospikeAsyncClient {
             processQueue( 1 );
 
             var blockingQueueWriteListener = new BlockingQueueWriteListener( writeListener );
-
-            var proc = new Runnable() {
-                @Override
-                public void run() {
-                    aerospikeClient.put( eventLoops.next(), blockingQueueWriteListener, writePolicy, key, bins );
-                }
-            };
-
+            Runnable proc = () -> aerospikeClient.put( eventLoops.next(), blockingQueueWriteListener, writePolicy, key, bins );
             blockingQueueWriteListener.proc = proc;
-
             proc.run();
-
             return Optional.empty();
         } catch( AerospikeException e ) {
             LogConsolidated.log( log, Level.ERROR, Dates.s( 5 ), e.getMessage(), null );
@@ -100,23 +83,21 @@ public class AerospikeAsyncClient {
 
     private void processQueue( int sleep ) throws InterruptedException {
         while( !blockingQueue.isEmpty() ) {
-            if( sleep > 0 ) Thread.sleep( sleep );
+            if( sleep > 0 ) {
+                LockSupport.parkNanos( sleep * 1_000_000 );
+            }
             blockingQueue.poll().run();
         }
     }
 
     public void waitTillComplete( long count, long timeout, TimeUnit unit ) throws InterruptedException, TimeoutException {
         var start = timeService.currentTimeMillis();
-
-        processQueue( 0 );
-
-        while( counter.get() < count ) {
-            if( timeService.currentTimeMillis() - start >= unit.toMillis( timeout ) )
-                throw new TimeoutException();
-
-            Thread.sleep( 1 ); // granularity is about 5 ms so not good enough
+        do {
             processQueue( 0 );
-        }
+            if( timeService.currentTimeMillis() - start > unit.toMillis( timeout ) )
+                throw new TimeoutException();
+            LockSupport.parkNanos( 1_000_000 ); // granularity is about 1.4 ms so good enough
+        } while( counter.get() < count );
     }
 
 

@@ -1,6 +1,5 @@
 package oap.aerospike;
 
-import aQute.service.reporter.Messages;
 import com.aerospike.client.AerospikeException;
 import com.aerospike.client.BatchRead;
 import com.aerospike.client.Bin;

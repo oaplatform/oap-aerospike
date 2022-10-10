@@ -19,9 +19,9 @@
     </modules>
 
     <properties>
-        <oap-aerospike.project.version>17.4.4.4</oap-aerospike.project.version>
+        <oap-aerospike.project.version>17.4.4.5</oap-aerospike.project.version>
 
-        <oap.deps.oap.version>17.10.33.0</oap.deps.oap.version>
+        <oap.deps.oap.version>17.10.34.9</oap.deps.oap.version>
         <oap.deps.aerospike.version>6.1.2</oap.deps.aerospike.version>
         <oap.deps.logback.version>1.4.3</oap.deps.logback.version>
         <oap.deps.lombok.version>1.18.24</oap.deps.lombok.version>

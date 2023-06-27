@@ -19,14 +19,14 @@
     </modules>
 
     <properties>
-        <oap-aerospike.project.version>17.5.0.2</oap-aerospike.project.version>
+        <oap-aerospike.project.version>17.5.0.3</oap-aerospike.project.version>
 
-        <oap.deps.oap.version>18.11.4.2</oap.deps.oap.version>
+        <oap.deps.oap.version>18.11.5.20</oap.deps.oap.version>
 
-        <oap.deps.aerospike.version>6.1.8</oap.deps.aerospike.version>
-        <oap.deps.slf4j.version>2.0.6</oap.deps.slf4j.version>
-        <oap.deps.logback.version>1.4.5</oap.deps.logback.version>
-        <oap.deps.lombok.version>1.18.24</oap.deps.lombok.version>
+        <oap.deps.aerospike.version>6.1.11</oap.deps.aerospike.version>
+        <oap.deps.slf4j.version>2.0.7</oap.deps.slf4j.version>
+        <oap.deps.logback.version>1.4.8</oap.deps.logback.version>
+        <oap.deps.lombok.version>1.18.28</oap.deps.lombok.version>
     </properties>
 
     <repositories>

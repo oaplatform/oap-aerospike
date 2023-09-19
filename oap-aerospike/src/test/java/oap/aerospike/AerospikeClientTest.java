@@ -131,11 +131,11 @@ public class AerospikeClientTest extends Fixtures {
 
             client.update( TEST_NAMESPACE, "test", "id1", Map.of( "b1", "v1" ), 1 );
 
-            var record = client.get( TEST_NAMESPACE, "test", "id1" );
-            assertThat( record.isSuccess() ).isTrue();
+            var record = client.get( TEST_NAMESPACE, "test", "id1" )
+                .orElseThrow( s -> new RuntimeException( s.name() ) );
 
-            assertThat( client.update( TEST_NAMESPACE, "test", "id1", record.successValue.generation, Map.of( "b1", "v1" ), 1 ) ).isEmpty();
-            assertThat( client.update( TEST_NAMESPACE, "test", "id1", record.successValue.generation, Map.of( "b1", "v2" ), 1 ) ).isPresent();
+            assertThat( client.update( TEST_NAMESPACE, "test", "id1", record.generation, Map.of( "b1", "v1" ), 1 ) ).isEmpty();
+            assertThat( client.update( TEST_NAMESPACE, "test", "id1", record.generation, Map.of( "b1", "v2" ), 1 ) ).isPresent();
         }
     }
 

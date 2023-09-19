@@ -510,10 +510,13 @@ public class AerospikeClient implements Closeable {
                     } )
                 .get( readTimeout, TimeUnit.MILLISECONDS );
         } catch( AerospikeException.AsyncQueueFull e ) {
+            LogConsolidated.log( log, Level.ERROR, s( 5 ), e.getMessage(), e );
             getMetricReadError( ERROR_CODE_REJECTED ).increment();
         } catch( TimeoutException e ) {
+            LogConsolidated.log( log, Level.TRACE, s( 5 ), e.getMessage(), e );
             getMetricReadError( ERROR_CODE_CLIENT_TIMEOUT ).increment();
         } catch( InterruptedException e ) {
+            LogConsolidated.log( log, Level.ERROR, s( 5 ), e.getMessage(), e );
             Thread.currentThread().interrupt();
             getMetricReadError( ERROR_CODE_INTERRUPTED ).increment();
         } catch( Exception e ) {

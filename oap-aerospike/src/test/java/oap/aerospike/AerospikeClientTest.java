@@ -44,8 +44,10 @@ import static org.testng.Assert.fail;
  */
 @Slf4j
 public class AerospikeClientTest extends Fixtures {
-    public AerospikeClientTest() {
-        fixture( new AerospikeFixture() );
+    private static final AerospikeFixture aerospikeFixture;
+
+    static {
+        aerospikeFixture = suiteFixture( new AerospikeFixture() );
     }
 
     @BeforeMethod
@@ -111,7 +113,7 @@ public class AerospikeClientTest extends Fixtures {
 
     @Test
     public void testGetSets() throws IOException {
-        try( var client = new AerospikeClient( AerospikeFixture.HOST, AerospikeFixture.PORT, true, JavaTimeService.INSTANCE ) ) {
+        try( var client = new AerospikeClient( AerospikeFixture.HOST, aerospikeFixture.getPort(), true, JavaTimeService.INSTANCE ) ) {
             client.start();
             client.waitConnectionEstablished();
 
@@ -123,7 +125,7 @@ public class AerospikeClientTest extends Fixtures {
 
     @Test
     public void testGenerationBins() throws IOException {
-        try( var client = new AerospikeClient( AerospikeFixture.HOST, AerospikeFixture.PORT, true, JavaTimeService.INSTANCE ) ) {
+        try( var client = new AerospikeClient( AerospikeFixture.HOST, aerospikeFixture.getPort(), true, JavaTimeService.INSTANCE ) ) {
             client.start();
             client.waitConnectionEstablished();
 
@@ -138,7 +140,7 @@ public class AerospikeClientTest extends Fixtures {
 
     @Test
     public void testBatchRead() throws Exception {
-        try( var client = new AerospikeClient( AerospikeFixture.HOST, AerospikeFixture.PORT, true, JavaTimeService.INSTANCE ) ) {
+        try( var client = new AerospikeClient( AerospikeFixture.HOST, aerospikeFixture.getPort(), true, JavaTimeService.INSTANCE ) ) {
             client.start();
             client.waitConnectionEstablished();
 
@@ -162,7 +164,7 @@ public class AerospikeClientTest extends Fixtures {
 
     @Test
     public void testFindAndModify() throws IOException {
-        try( var client = new AerospikeClient( AerospikeFixture.HOST, AerospikeFixture.PORT, true, JavaTimeService.INSTANCE ) ) {
+        try( var client = new AerospikeClient( AerospikeFixture.HOST, aerospikeFixture.getPort(), true, JavaTimeService.INSTANCE ) ) {
             client.start();
             client.waitConnectionEstablished();
 
@@ -191,7 +193,7 @@ public class AerospikeClientTest extends Fixtures {
 
     @Test
     public void testStream() throws IOException {
-        try( var client = new AerospikeClient( AerospikeFixture.HOST, AerospikeFixture.PORT, true, JavaTimeService.INSTANCE ) ) {
+        try( var client = new AerospikeClient( AerospikeFixture.HOST, aerospikeFixture.getPort(), true, JavaTimeService.INSTANCE ) ) {
             client.primaryKeyStored = true;
             client.start();
             client.waitConnectionEstablished();
@@ -211,7 +213,7 @@ public class AerospikeClientTest extends Fixtures {
 
     @Test
     public void testQuery() throws IOException, InterruptedException, ExecutionException, TimeoutException {
-        try( var client = new AerospikeClient( AerospikeFixture.HOST, AerospikeFixture.PORT, true, JavaTimeService.INSTANCE ) ) {
+        try( var client = new AerospikeClient( AerospikeFixture.HOST, aerospikeFixture.getPort(), true, JavaTimeService.INSTANCE ) ) {
             client.primaryKeyStored = true;
             client.start();
             client.waitConnectionEstablished();
@@ -226,7 +228,7 @@ public class AerospikeClientTest extends Fixtures {
 
 
                 var res = new ArrayList<Pair<Key, Record>>();
-                var resultFuture = client.query( TEST_NAMESPACE, "test", "test_index", Filter.contains( "test_bin",  IndexCollectionType.LIST, 1 ), res::add,
+                var resultFuture = client.query( TEST_NAMESPACE, "test", "test_index", Filter.contains( "test_bin", IndexCollectionType.LIST, 1 ), res::add,
                     "test_bin" );
                 var result = resultFuture.get( 10, TimeUnit.SECONDS );
                 assertThat( result ).isEmpty();
@@ -240,7 +242,7 @@ public class AerospikeClientTest extends Fixtures {
 
     @Test
     public void testOperations() throws IOException, InterruptedException, TimeoutException {
-        try( var client = new AerospikeClient( AerospikeFixture.HOST, AerospikeFixture.PORT, true, JavaTimeService.INSTANCE ) ) {
+        try( var client = new AerospikeClient( AerospikeFixture.HOST, aerospikeFixture.getPort(), true, JavaTimeService.INSTANCE ) ) {
             client.primaryKeyStored = true;
             client.eventLoopSize = 1;
             client.maxCommandsInQueue = 1;

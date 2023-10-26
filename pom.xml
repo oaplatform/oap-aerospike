@@ -23,7 +23,7 @@
 
         <oap.deps.aerospike.version>6.1.11</oap.deps.aerospike.version>
         <oap.deps.slf4j.version>2.0.7</oap.deps.slf4j.version>
-        <oap.deps.logback.version>1.4.8</oap.deps.logback.version>
+        <oap.deps.logback.version>1.4.11</oap.deps.logback.version>
         <oap.deps.lombok.version>1.18.28</oap.deps.lombok.version>
         <oap.deps.testcontainers.version>1.17.6</oap.deps.testcontainers.version>
     </properties>

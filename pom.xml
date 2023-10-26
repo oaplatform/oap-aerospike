@@ -19,7 +19,7 @@
     <properties>
         <oap-aerospike.project.version>18.0.0</oap-aerospike.project.version>
 
-        <oap.deps.oap.version>18.11.5.26</oap.deps.oap.version>
+        <oap.deps.oap.version>18.12.0.0-template_v2-1884</oap.deps.oap.version>
 
         <oap.deps.aerospike.version>6.1.11</oap.deps.aerospike.version>
         <oap.deps.slf4j.version>2.0.7</oap.deps.slf4j.version>

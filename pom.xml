@@ -17,15 +17,15 @@
     </modules>
 
     <properties>
-        <oap-aerospike.project.version>18.1.1</oap-aerospike.project.version>
+        <oap-aerospike.project.version>21.2.0</oap-aerospike.project.version>
 
-        <oap.deps.oap.version>18.13.1</oap.deps.oap.version>
+        <oap.deps.oap.version>21.1.8</oap.deps.oap.version>
 
-        <oap.deps.aerospike.version>6.1.11</oap.deps.aerospike.version>
+        <oap.deps.aerospike.version>6.2.0</oap.deps.aerospike.version>
         <oap.deps.slf4j.version>2.0.7</oap.deps.slf4j.version>
-        <oap.deps.logback.version>1.4.8</oap.deps.logback.version>
+        <oap.deps.logback.version>1.4.14</oap.deps.logback.version>
         <oap.deps.lombok.version>1.18.30</oap.deps.lombok.version>
-        <oap.deps.testcontainers.version>1.19.1</oap.deps.testcontainers.version>
+        <oap.deps.testcontainers.version>1.19.3</oap.deps.testcontainers.version>
     </properties>
 
     <repositories>
